@@ -282,7 +282,7 @@ td .d{color:var(--muted);font-size:.8rem}
           <tbody id="p-perf"></tbody>
         </table>
       </div>
-      <p class="note">Podés cambiar los kg por metro y el precio por kg de cada artículo en cada acabado. Si dejás vacío un precio, usa el precio general del acabado (en Parámetros, arriba). Debajo de cada precio ves cuánto sale el metro.</p>
+      <p class="note">Podés cambiar los kg por metro (o los kg de la barra entera, se calculan uno del otro) y el precio por kg de cada artículo en cada acabado. Si dejás vacío un precio, usa el precio general del acabado (en Parámetros, arriba). Debajo de cada precio ves cuánto sale el metro.</p>
       <button class="btn ghost sm" id="add-perf" style="margin-top:10px">+ Agregar perfil</button>
     </section>
     <section class="panel">
@@ -553,12 +553,13 @@ function renderPrecios(){
   if(!LN){$("p-perf").innerHTML="";$("p-acc").innerHTML="";return}
   const AC=Object.keys(P.acabados);
   $("p-perf-head").innerHTML=`<tr><th>Artículo</th><th class="n">Kg / metro</th><th class="n">Kg / barra</th>${AC.map(k=>`<th class="n">${esc(k)}<br><span style="text-transform:none;letter-spacing:0">U$S por kg</span></th>`).join("")}<th></th></tr>`;
-  $("p-perf").innerHTML=LN.perfiles.map((p,i)=>`<tr><td><input data-pf="${i}" data-f="n" value="${esc(p.n)}"></td><td class="n"><input type="number" step="0.001" data-pf="${i}" data-f="kgm" value="${p.kgm}"></td><td class="n" id="pk-${i}"></td>${AC.map(k=>`<td class="n"><input type="number" step="0.01" min="0" data-pp="${i}" data-ac="${esc(k)}" value="${p.precio?.[k]??""}" placeholder="${P.acabados[k]}" title="Vacío: usa el precio general de ${esc(k.toLowerCase())}"><div class="d" id="pm-${i}-${esc(k)}" style="font-size:.75rem;color:var(--muted)"></div></td>`).join("")}<td><button class="x" data-pfdel="${i}" aria-label="Quitar">×</button></td></tr>`).join("");
+  $("p-perf").innerHTML=LN.perfiles.map((p,i)=>`<tr><td><input data-pf="${i}" data-f="n" value="${esc(p.n)}"></td><td class="n"><input type="number" step="0.001" data-pf="${i}" data-f="kgm" value="${p.kgm}"></td><td class="n"><input type="number" step="0.001" min="0" id="pk-${i}" data-kb="${i}" title="Kg de una barra entera"></td>${AC.map(k=>`<td class="n"><input type="number" step="0.01" min="0" data-pp="${i}" data-ac="${esc(k)}" value="${p.precio?.[k]??""}" placeholder="${P.acabados[k]}" title="Vacío: usa el precio general de ${esc(k.toLowerCase())}"><div class="d" id="pm-${i}-${esc(k)}" style="font-size:.75rem;color:var(--muted)"></div></td>`).join("")}<td><button class="x" data-pfdel="${i}" aria-label="Quitar">×</button></td></tr>`).join("");
   $("p-acc").innerHTML=LN.accesorios.map((a,i)=>`<tr><td><input data-ax="${i}" data-f="n" value="${esc(a.n)}"></td><td class="n"><input type="number" step="0.01" data-ax="${i}" data-f="usd" value="${a.usd}"></td><td><button class="x" data-axdel="${i}" aria-label="Quitar">×</button></td></tr>`).join("");
   calcPrecios();
 }
 function calcPrecios(){
-  (P.lineas[PL]?.perfiles||[]).forEach((p,i)=>{ const c=$("pk-"+i); if(c) c.textContent=num(p.kgm*P.barra,3);
+  (P.lineas[PL]?.perfiles||[]).forEach((p,i)=>{ const c=$("pk-"+i); if(c && document.activeElement!==c) c.value=Math.round(p.kgm*P.barra*1000)/1000;
+    const km=document.querySelector(`[data-pf="${i}"][data-f="kgm"]`); if(km && document.activeElement!==km) km.value=Math.round(p.kgm*10000)/10000;
     Object.keys(P.acabados).forEach(k=>{const t=document.getElementById(`pm-${i}-${k}`); if(t) t.textContent=`U$S ${num(p.kgm*precioKg(p,k))} /m`}) });
 }
 function rename(lista,oldN,newN){ const lin=P.lineas[PL].n; [F,...items].forEach(v=>{ if(v.linea===lin) v[lista].forEach(l=>{ if(l.n===oldN) l.n=newN }) }) }
@@ -568,6 +569,8 @@ $("v-precios").addEventListener("input",e=>{
   if(d.g){ if(d.g==="barra"&&v<1) return; P[d.g]=v }
   else if(d.acab){ P.acabados[d.acab]=v; document.querySelectorAll(`[data-pp][data-ac="${d.acab}"]`).forEach(x=>x.placeholder=v) }
   else if(d.pf!==undefined){ const p=P.lineas[PL].perfiles[+d.pf]; if(d.f==="n") rename("alu",p.n,v); p[d.f]=v; if(d.f==="kgm"){ const t=$("p-lineas").children[PL]; if(t) t.innerHTML=esc(P.lineas[PL].n)+(faltanKg(P.lineas[PL].n)?' <span class="chip">faltan kg</span>':"") } }
+  else if(d.kb!==undefined){ const p=P.lineas[PL].perfiles[+d.kb]; p.kgm=(+el.value||0)/(P.barra||3);
+    const t=$("p-lineas").children[PL]; if(t) t.innerHTML=esc(P.lineas[PL].n)+(faltanKg(P.lineas[PL].n)?' <span class="chip">faltan kg</span>':"") }
   else if(d.pp!==undefined){ const p=P.lineas[PL].perfiles[+d.pp]; p.precio=p.precio||{}; if(el.value==="") delete p.precio[d.ac]; else p.precio[d.ac]=+el.value||0 }
   else if(d.ax!==undefined){ const a=P.lineas[PL].accesorios[+d.ax]; if(d.f==="n") rename("acc",a.n,v); a[d.f]=v }
   else if(el.id==="p-lnombre"){ const nn=el.value.trim(), old=P.lineas[PL].n; if(!nn||P.lineas.some((l,i)=>i!==PL&&l.n===nn)) return;
