@@ -124,8 +124,8 @@ td .d{color:var(--muted);font-size:.8rem}
       <section class="panel" id="dolar-box">
         <div class="quote-head" style="margin-bottom:8px;align-items:center"><h2 style="margin:0">Dólar BROU</h2><span id="dolar-estado"></span></div>
         <div class="fields" style="align-items:end">
-          <label>Compra<input id="d-compra" type="number" step="0.01" min="0" inputmode="decimal"></label>
-          <label>Venta<input id="d-venta" type="number" step="0.01" min="0" inputmode="decimal"></label>
+          <label>Compra<input id="d-compra" type="text" inputmode="decimal" autocomplete="off" step="0.01" min="0" inputmode="decimal"></label>
+          <label>Venta<input id="d-venta" type="text" inputmode="decimal" autocomplete="off" step="0.01" min="0" inputmode="decimal"></label>
           <label>Media que se usa<input id="d-media" readonly tabindex="-1"></label>
           <a class="btn ghost" href="https://www.brou.com.uy/cotizaciones" target="_blank" rel="noopener" style="text-align:center;text-decoration:none">Ver cotización en BROU</a>
         </div>
@@ -146,9 +146,9 @@ td .d{color:var(--muted);font-size:.8rem}
         <div class="confirm" id="aviso-linea" hidden style="margin-bottom:10px"></div>
         <div class="fields">
           <label>Nombre de la ventana<input id="v-nombre" placeholder="Ej: Dormitorio"></label>
-          <label>Cantidad de ventanas<input id="v-cant" type="number" min="1" step="1" inputmode="numeric"></label>
-          <label>Ancho (m)<input id="v-ancho" type="number" min="0" step="0.01" inputmode="decimal"></label>
-          <label>Alto (m)<input id="v-alto" type="number" min="0" step="0.01" inputmode="decimal"></label>
+          <label>Cantidad de ventanas<input id="v-cant" type="text" inputmode="decimal" autocomplete="off" min="1" step="1" inputmode="numeric"></label>
+          <label>Ancho (m)<input id="v-ancho" type="text" inputmode="decimal" autocomplete="off" min="0" step="0.01" inputmode="decimal"></label>
+          <label>Alto (m)<input id="v-alto" type="text" inputmode="decimal" autocomplete="off" min="0" step="0.01" inputmode="decimal"></label>
         </div>
 
         <h3 style="margin-top:16px">Aluminio <span style="text-transform:none;letter-spacing:0;font-weight:500">· metros para una ventana</span></h3>
@@ -172,9 +172,9 @@ td .d{color:var(--muted);font-size:.8rem}
 
         <h3 style="margin-top:16px">Vidrio <span style="text-transform:none;letter-spacing:0;font-weight:500">· paños de una ventana</span></h3>
         <div class="fields">
-          <label>Cantidad<input id="g-cant" type="number" min="0" step="1"></label>
-          <label>Ancho (m)<input id="g-ancho" type="number" min="0" step="0.01"></label>
-          <label>Alto (m)<input id="g-alto" type="number" min="0" step="0.01"></label>
+          <label>Cantidad<input id="g-cant" type="text" inputmode="decimal" autocomplete="off" min="0" step="1"></label>
+          <label>Ancho (m)<input id="g-ancho" type="text" inputmode="decimal" autocomplete="off" min="0" step="0.01"></label>
+          <label>Alto (m)<input id="g-alto" type="text" inputmode="decimal" autocomplete="off" min="0" step="0.01"></label>
           <label>M² totales<input id="g-m2" readonly tabindex="-1"></label>
         </div>
 
@@ -301,6 +301,9 @@ td .d{color:var(--muted);font-size:.8rem}
 <div class="toast" id="toast" hidden></div>
 
 <script>
+document.addEventListener("input",e=>{const el=e.target; if(el && el.inputMode==="decimal" && el.value.includes(",")){ const pos=el.selectionStart; el.value=el.value.replace(/,/g,"."); try{el.setSelectionRange(pos,pos)}catch(_){} }},true);
+</script>
+<script>
 // Valores de PRESUPUESTO_ALUCAST (hojas MATERIALES y PROBBA)
 const DEF = {
   dolar:41, vidrio:10, barra:6.8,
@@ -367,8 +370,8 @@ function renderLineas(){
 function renderForm(){
   renderLineas();
   $("v-nombre").value=F.nombre; $("v-cant").value=F.cant??"1"; $("v-ancho").value=F.ancho??""; $("v-alto").value=F.alto??"";
-  $("l-alu").innerHTML=F.alu.map((l,i)=>`<tr><td><select data-al="${i}" data-f="n">${optPerf(l.n)}</select></td><td class="n"><input type="number" min="0" step="0.01" inputmode="decimal" data-al="${i}" data-f="m" value="${l.m}" placeholder="0"></td><td class="n" id="ab-${i}"></td><td class="n" id="ak-${i}"></td><td><button class="x" data-aldel="${i}" aria-label="Quitar">×</button></td></tr>`).join("");
-  $("l-acc").innerHTML=F.acc.map((l,i)=>`<tr><td><select data-ac="${i}" data-f="n">${optAcc(l.n)}</select></td><td class="n"><input type="number" min="0" step="1" data-ac="${i}" data-f="q" value="${l.q}" placeholder="0"></td><td class="n" id="cu-${i}"></td><td><button class="x" data-acdel="${i}" aria-label="Quitar">×</button></td></tr>`).join("");
+  $("l-alu").innerHTML=F.alu.map((l,i)=>`<tr><td><select data-al="${i}" data-f="n">${optPerf(l.n)}</select></td><td class="n"><input type="text" inputmode="decimal" autocomplete="off" min="0" step="0.01" inputmode="decimal" data-al="${i}" data-f="m" value="${l.m}" placeholder="0"></td><td class="n" id="ab-${i}"></td><td class="n" id="ak-${i}"></td><td><button class="x" data-aldel="${i}" aria-label="Quitar">×</button></td></tr>`).join("");
+  $("l-acc").innerHTML=F.acc.map((l,i)=>`<tr><td><select data-ac="${i}" data-f="n">${optAcc(l.n)}</select></td><td class="n"><input type="text" inputmode="decimal" autocomplete="off" min="0" step="1" data-ac="${i}" data-f="q" value="${l.q}" placeholder="0"></td><td class="n" id="cu-${i}"></td><td><button class="x" data-acdel="${i}" aria-label="Quitar">×</button></td></tr>`).join("");
   $("g-cant").value=F.vid.cant; $("g-ancho").value=F.vid.ancho; $("g-alto").value=F.vid.alto;
   $("nota-barra").textContent=`Se cobran barras enteras de ${num(P.barra,1)} m. Si ponés ${num(P.barra*0.8,2)} m se cobra una barra (${num(P.barra,2)} m); si ponés ${num(P.barra+0.5,2)} m se cobran dos.`;
   $("v-titulo").textContent = editIdx>=0 ? `Editando ventana ${editIdx+1}` : "Nueva ventana";
@@ -421,7 +424,7 @@ $("btn-cancel").onclick=()=>{editIdx=-1;F=blank();renderForm()};
 // ---- presupuesto ----
 function fechaTxt(){const v=$("c-fecha").value; if(!v) return ""; const [a,m,d]=v.split("-"); return `${d}/${m}/${a}`}
 function renderExtras(){
-  $("extras").innerHTML=extras.map((x,i)=>`<div class="extra-row"><input data-ex="${i}" data-f="c" value="${esc(x.c)}" placeholder="Concepto"><input data-ex="${i}" data-f="monto" type="number" min="0" value="${esc(x.monto)}" placeholder="$"><button class="x" data-exdel="${i}" aria-label="Quitar">×</button></div>`).join("");
+  $("extras").innerHTML=extras.map((x,i)=>`<div class="extra-row"><input data-ex="${i}" data-f="c" value="${esc(x.c)}" placeholder="Concepto"><input data-ex="${i}" data-f="monto" type="text" inputmode="decimal" autocomplete="off" min="0" value="${esc(x.monto)}" placeholder="$"><button class="x" data-exdel="${i}" aria-label="Quitar">×</button></div>`).join("");
 }
 function totals(){ const v=items.reduce((s,it)=>s+calc(it).pesos,0), e=extras.reduce((s,x)=>s+(+x.monto||0),0); return {v,e,total:v+e} }
 // Precio de cada ventana para el cliente: materiales + su parte de la mano de obra (proporcional), redondeado y cuadrado con el total
@@ -545,8 +548,8 @@ function abrir(n){ const q=load("alucast-hist-v4",[]).find(x=>x.num==n); if(!q)r
 // ---- lista de precios ----
 function renderPrecios(){
   $("p-gen").innerHTML=`<label>Dólar (media BROU)<input value="$ ${num(P.dolar)}" readonly tabindex="-1" title="Se carga arriba en la pestaña Presupuesto"></label>`+
-    Object.keys(P.acabados).map(k=>`<label>Precio general ${esc(k.toLowerCase())} (U$S/kg)<input type="number" step="0.01" data-acab="${esc(k)}" value="${P.acabados[k]}"></label>`).join("")+
-    `<label>Vidrio (U$S/m²)<input type="number" step="0.01" data-g="vidrio" value="${P.vidrio}"></label><label>Largo de barra (m)<input type="number" step="0.1" min="1" data-g="barra" value="${P.barra}"></label>`;
+    Object.keys(P.acabados).map(k=>`<label>Precio general ${esc(k.toLowerCase())} (U$S/kg)<input type="text" inputmode="decimal" autocomplete="off" step="0.01" data-acab="${esc(k)}" value="${P.acabados[k]}"></label>`).join("")+
+    `<label>Vidrio (U$S/m²)<input type="text" inputmode="decimal" autocomplete="off" step="0.01" data-g="vidrio" value="${P.vidrio}"></label><label>Largo de barra (m)<input type="text" inputmode="decimal" autocomplete="off" step="0.1" min="1" data-g="barra" value="${P.barra}"></label>`;
   if(PL>=P.lineas.length) PL=0;
   const LN=P.lineas[PL];
   $("p-lineas").innerHTML=P.lineas.map((l,i)=>`<button class="tab" role="tab" data-pl="${i}" aria-selected="${i===PL}">${esc(l.n)}${faltanKg(l.n)?' <span class="chip">faltan kg</span>':""}</button>`).join("")+`<button class="btn ghost sm" id="add-linea">+ Nueva línea</button>`;
@@ -555,8 +558,8 @@ function renderPrecios(){
   if(!LN){$("p-perf").innerHTML="";$("p-acc").innerHTML="";return}
   const AC=Object.keys(P.acabados);
   $("p-perf-head").innerHTML=`<tr><th>Artículo</th><th class="n">Kg / metro</th><th class="n">Kg / barra</th>${AC.map(k=>`<th class="n">${esc(k)}<br><span style="text-transform:none;letter-spacing:0">U$S por kg</span></th>`).join("")}<th></th></tr>`;
-  $("p-perf").innerHTML=LN.perfiles.map((p,i)=>`<tr><td><input data-pf="${i}" data-f="n" value="${esc(p.n)}"></td><td class="n"><input type="number" step="0.001" data-pf="${i}" data-f="kgm" value="${p.kgm}"></td><td class="n"><input type="number" step="0.001" min="0" id="pk-${i}" data-kb="${i}" title="Kg de una barra entera"></td>${AC.map(k=>`<td class="n"><input type="number" step="0.01" min="0" data-pp="${i}" data-ac="${esc(k)}" value="${p.precio?.[k]??""}" placeholder="${P.acabados[k]}" title="Vacío: usa el precio general de ${esc(k.toLowerCase())}"><div class="d" id="pm-${i}-${esc(k)}" style="font-size:.75rem;color:var(--muted)"></div></td>`).join("")}<td><button class="x" data-pfdel="${i}" aria-label="Quitar">×</button></td></tr>`).join("");
-  $("p-acc").innerHTML=LN.accesorios.map((a,i)=>`<tr><td><input data-ax="${i}" data-f="n" value="${esc(a.n)}"></td><td class="n"><input type="number" step="0.01" data-ax="${i}" data-f="usd" value="${a.usd}"></td><td><button class="x" data-axdel="${i}" aria-label="Quitar">×</button></td></tr>`).join("");
+  $("p-perf").innerHTML=LN.perfiles.map((p,i)=>`<tr><td><input data-pf="${i}" data-f="n" value="${esc(p.n)}"></td><td class="n"><input type="text" inputmode="decimal" autocomplete="off" step="0.001" data-pf="${i}" data-f="kgm" value="${p.kgm}"></td><td class="n"><input type="text" inputmode="decimal" autocomplete="off" step="0.001" min="0" id="pk-${i}" data-kb="${i}" title="Kg de una barra entera"></td>${AC.map(k=>`<td class="n"><input type="text" inputmode="decimal" autocomplete="off" step="0.01" min="0" data-pp="${i}" data-ac="${esc(k)}" value="${p.precio?.[k]??""}" placeholder="${P.acabados[k]}" title="Vacío: usa el precio general de ${esc(k.toLowerCase())}"><div class="d" id="pm-${i}-${esc(k)}" style="font-size:.75rem;color:var(--muted)"></div></td>`).join("")}<td><button class="x" data-pfdel="${i}" aria-label="Quitar">×</button></td></tr>`).join("");
+  $("p-acc").innerHTML=LN.accesorios.map((a,i)=>`<tr><td><input data-ax="${i}" data-f="n" value="${esc(a.n)}"></td><td class="n"><input type="text" inputmode="decimal" autocomplete="off" step="0.01" data-ax="${i}" data-f="usd" value="${a.usd}"></td><td><button class="x" data-axdel="${i}" aria-label="Quitar">×</button></td></tr>`).join("");
   calcPrecios();
 }
 function calcPrecios(){
@@ -567,7 +570,7 @@ function calcPrecios(){
 function rename(lista,oldN,newN){ const lin=P.lineas[PL].n; [F,...items].forEach(v=>{ if(v.linea===lin) v[lista].forEach(l=>{ if(l.n===oldN) l.n=newN }) }) }
 function precioCambio(full){ save("alucast-lista-v5",P); if(full) renderPrecios(); else calcPrecios(); renderForm(); render() }
 $("v-precios").addEventListener("input",e=>{
-  const el=e.target, d=el.dataset, v=el.type==="number"?(+el.value||0):el.value;
+  const el=e.target, d=el.dataset, v=el.inputMode==="decimal"?(+el.value||0):el.value;
   if(d.g){ if(d.g==="barra"&&v<1) return; P[d.g]=v }
   else if(d.acab){ P.acabados[d.acab]=v; document.querySelectorAll(`[data-pp][data-ac="${d.acab}"]`).forEach(x=>x.placeholder=v) }
   else if(d.pf!==undefined){ const p=P.lineas[PL].perfiles[+d.pf]; if(d.f==="n") rename("alu",p.n,v); p[d.f]=v; if(d.f==="kgm"){ const t=$("p-lineas").children[PL]; if(t) t.innerHTML=esc(P.lineas[PL].n)+(faltanKg(P.lineas[PL].n)?' <span class="chip">faltan kg</span>':"") } }
