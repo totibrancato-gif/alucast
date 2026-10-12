@@ -107,7 +107,7 @@ td .d{color:var(--muted);font-size:.8rem}
   <header class="brand">
     <div>
       <div class="logo">Alu<span>cast</span></div>
-      <div class="sub">Aberturas de aluminio · Presupuestador · <span title="Versión de la app">versión 8</span></div>
+      <div class="sub">Aberturas de aluminio · Presupuestador · <span title="Versión de la app">versión 9</span></div>
     </div>
     <div class="tabs" role="tablist">
       <button class="tab" role="tab" id="t-presu" aria-selected="true">Presupuesto</button>
@@ -178,6 +178,12 @@ td .d{color:var(--muted);font-size:.8rem}
           <label>M² totales<input id="g-m2" readonly tabindex="-1"></label>
         </div>
 
+        <h3 style="margin-top:16px">Mano de obra y extras <span style="text-transform:none;letter-spacing:0;font-weight:500">· en pesos, por una ventana · no los ve el cliente</span></h3>
+        <div class="fields">
+          <label>Mano de obra ($)<input id="v-mo" type="text" inputmode="decimal" autocomplete="off" placeholder="0"></label>
+          <label>Extras ($)<input id="v-ex" type="text" inputmode="decimal" autocomplete="off" placeholder="0"></label>
+        </div>
+
         <h3 style="margin-top:18px">Precio de la ventana · elegí el acabado</h3>
         <div class="fin" id="fin"></div>
 
@@ -215,10 +221,13 @@ td .d{color:var(--muted);font-size:.8rem}
     </section>
 
     <section class="panel" style="background:var(--sunk)">
-      <h2>Mano de obra y extras</h2>
-      <p class="note" style="margin:0 0 10px">Solo lo ves vos. No aparece en el presupuesto: se reparte en el precio de las ventanas y se suma al precio final.</p>
-      <div id="extras"></div>
-      <button class="btn ghost sm" id="btn-extra">+ Agregar concepto</button>
+      <h2>Resumen interno</h2>
+      <p class="note" style="margin:0 0 10px">Solo lo ves vos. La mano de obra y los extras se cargan en cada ventana y van incluidos en su precio; el cliente no los ve por separado.</p>
+      <div id="extras-viejos" hidden>
+        <p class="note" style="margin:0 0 6px">Extras generales de este presupuesto (de la versión anterior):</p>
+        <div id="extras"></div>
+        <button class="btn ghost sm" id="btn-extra" hidden>+ Agregar concepto</button>
+      </div>
       <div class="totals" id="interno"></div>
     </section>
     </div>
@@ -338,7 +347,7 @@ const L=n=>P.lineas.find(x=>x.n===n)||{n,perfiles:[],accesorios:[]};
 
 function blank(linea){
   const l=L(linea||P.lineas[0]?.n);
-  return {linea:l.n, nombre:"", cant:"1", ancho:"", alto:"", acabado:Object.keys(P.acabados)[0], alu:l.perfiles.map(p=>({n:p.n,m:""})), acc:l.accesorios.map(a=>({n:a.n,q:""})), vid:{cant:"",ancho:"",alto:""}};
+  return {linea:l.n, nombre:"", cant:"1", ancho:"", alto:"", acabado:Object.keys(P.acabados)[0], alu:l.perfiles.map(p=>({n:p.n,m:""})), acc:l.accesorios.map(a=>({n:a.n,q:""})), vid:{cant:"",ancho:"",alto:""}, mo:"", ex:""};
 }
 
 // ---- cálculo (igual que la planilla, con barras enteras) ----
@@ -354,9 +363,10 @@ function calc(v){
   const kg=v.alu.reduce((s,l)=>s+lineaAlu(l,v.linea,k).kg,0);
   const acc=v.acc.reduce((s,l)=>s+(+l.q||0)*accUsd(l.n,v.linea),0)*k;
   const m2=(+v.vid.cant||0)*(+v.vid.ancho||0)*(+v.vid.alto||0)*k, vid=m2*P.vidrio;
-  const por={}; Object.keys(P.acabados).forEach(ac=>{ const alu=v.alu.reduce((s,l)=>s+lineaAlu(l,v.linea,k).kg*precioKg(perfilDe(l.n,v.linea),ac),0); const u=alu+acc+vid; por[ac]={usd:u,pesos:u*P.dolar} });
+  const mo=(+v.mo||0)*k, ex=(+v.ex||0)*k;
+  const por={}; Object.keys(P.acabados).forEach(ac=>{ const alu=v.alu.reduce((s,l)=>s+lineaAlu(l,v.linea,k).kg*precioKg(perfilDe(l.n,v.linea),ac),0); const u=alu+acc+vid; por[ac]={usd:u,pesos:u*P.dolar+mo+ex} });
   const sel=por[v.acabado]||{usd:0,pesos:0};
-  return {k,kg,acc,m2,vid,por,usd:sel.usd,pesos:sel.pesos};
+  return {k,kg,acc,m2,vid,mo,ex,por,usd:sel.usd,pesos:sel.pesos,mat:sel.usd*P.dolar};
 }
 
 // ---- formulario de ventana ----
@@ -370,7 +380,7 @@ function renderLineas(){
 }
 function renderForm(){
   renderLineas();
-  $("v-nombre").value=F.nombre; $("v-cant").value=F.cant??"1"; $("v-ancho").value=F.ancho??""; $("v-alto").value=F.alto??"";
+  $("v-nombre").value=F.nombre; $("v-mo").value=F.mo??""; $("v-ex").value=F.ex??""; $("v-cant").value=F.cant??"1"; $("v-ancho").value=F.ancho??""; $("v-alto").value=F.alto??"";
   $("l-alu").innerHTML=F.alu.map((l,i)=>`<tr><td><select data-al="${i}" data-f="n">${optPerf(l.n)}</select></td><td class="n"><input type="text" inputmode="decimal" autocomplete="off" min="0" step="0.01" inputmode="decimal" data-al="${i}" data-f="m" value="${l.m}" placeholder="0"></td><td class="n" id="ab-${i}"></td><td class="n" id="ak-${i}"></td><td><button class="x" data-aldel="${i}" aria-label="Quitar">×</button></td></tr>`).join("");
   $("l-acc").innerHTML=F.acc.map((l,i)=>`<tr><td><select data-ac="${i}" data-f="n">${optAcc(l.n)}</select></td><td class="n"><input type="text" inputmode="decimal" autocomplete="off" min="0" step="1" data-ac="${i}" data-f="q" value="${l.q}" placeholder="0"></td><td class="n" id="cu-${i}"></td><td><button class="x" data-acdel="${i}" aria-label="Quitar">×</button></td></tr>`).join("");
   $("g-cant").value=F.vid.cant; $("g-ancho").value=F.vid.ancho; $("g-alto").value=F.vid.alto;
@@ -387,7 +397,7 @@ function updateForm(){
   const c=calc(F);
   $("g-m2").value=num(c.m2);
   $("fin").innerHTML=Object.keys(P.acabados).map(k=>`<label class="opt"><input type="radio" name="acabado" value="${esc(k)}"${F.acabado===k?" checked":""}><span><span class="u">${c.k>1?c.k+" ventanas":"Ventana"} en ${esc(k.toLowerCase())}</span><span class="p">${pes(c.por[k].pesos)}</span><span class="u">U$S ${num(c.por[k].usd)}${c.k>1?` · ${pes(c.por[k].pesos/c.k)} c/u`:""}</span></span></label>`).join("")+
-    `<div class="muted" style="font-size:.82rem;align-self:center">${c.k>1?`Total de ${c.k} ventanas. `:""}Aluminio ${num(c.kg,3)} kg · Accesorios U$S ${num(c.acc)} · Vidrio U$S ${num(c.vid)}</div>`;
+    `<div class="muted" style="font-size:.82rem;align-self:center">${c.k>1?`Total de ${c.k} ventanas. `:""}Aluminio ${num(c.kg,3)} kg · Accesorios U$S ${num(c.acc)} · Vidrio U$S ${num(c.vid)}${(c.mo||c.ex)?` · Mano de obra ${pes(c.mo)} · Extras ${pes(c.ex)} (incluidos)`:""}</div>`;
   $("ab-head").textContent = kq>1 ? `Barras (${kq} vent.)` : "Barras";
   saveDraft();
 }
@@ -396,6 +406,7 @@ $("v-presu").addEventListener("input",e=>{
   if(d.al!==undefined){ F.alu[+d.al][d.f]=el.value; updateForm(); return }
   if(d.ac!==undefined){ F.acc[+d.ac][d.f]=el.value; updateForm(); return }
   if(el.id==="v-nombre"){ F.nombre=el.value; saveDraft(); return }
+  if(el.id==="v-mo"||el.id==="v-ex"){ F[el.id.slice(2)]=el.value; updateForm(); return }
   if(el.id==="v-cant"){ F.cant=el.value; updateForm(); return }
   if(el.id==="v-ancho"||el.id==="v-alto"){ const k=el.id.slice(2), prev=F[k]??"";
     if(F.vid[k]===""||F.vid[k]===prev){ F.vid[k]=el.value; $("g-"+k).value=el.value; if(F.vid.cant==="") { F.vid.cant="1"; $("g-cant").value="1" } }
@@ -425,6 +436,7 @@ $("btn-cancel").onclick=()=>{editIdx=-1;F=blank();renderForm()};
 // ---- presupuesto ----
 function fechaTxt(){const v=$("c-fecha").value; if(!v) return ""; const [a,m,d]=v.split("-"); return `${d}/${m}/${a}`}
 function renderExtras(){
+  const hay=extras.some(x=>+x.monto); $("extras-viejos").hidden=!hay; if(!hay) extras=[];
   $("extras").innerHTML=extras.map((x,i)=>`<div class="extra-row"><input data-ex="${i}" data-f="c" value="${esc(x.c)}" placeholder="Concepto"><input data-ex="${i}" data-f="monto" type="text" inputmode="decimal" autocomplete="off" min="0" value="${esc(x.monto)}" placeholder="$"><button class="x" data-exdel="${i}" aria-label="Quitar">×</button></div>`).join("");
 }
 function totals(){ const v=items.reduce((s,it)=>s+calc(it).pesos,0), e=extras.reduce((s,x)=>s+(+x.monto||0),0); return {v,e,total:v+e} }
@@ -448,7 +460,8 @@ function render(){
     : `<tr><td colspan="4" class="empty">Todavía no hay ventanas. Cargá los metros a la izquierda y tocá "Agregar al presupuesto".</td></tr>`;
   const t=totals();
   $("totales").innerHTML=`<div class="grand"><span>Precio final</span><span>${pes(pc.total)}</span></div>`;
-  $("interno").innerHTML=`<div><span>Materiales (aluminio, accesorios, vidrio)</span><span>${pes(t.v)}</span></div><div><span>Mano de obra y extras</span><span>${pes(t.e)}</span></div><div class="grand"><span>Precio final</span><span>${pes(pc.total)}</span></div><div class="muted" style="font-size:.8rem">Dólar a $ ${num(P.dolar)}</div>`;
+  const sm=items.reduce((a,it)=>{const c=calc(it); a.mat+=c.mat; a.mo+=c.mo; a.ex+=c.ex; return a},{mat:0,mo:0,ex:0});
+  $("interno").innerHTML=`<div><span>Materiales (aluminio, accesorios, vidrio)</span><span>${pes(sm.mat)}</span></div><div><span>Mano de obra</span><span>${pes(sm.mo)}</span></div><div><span>Extras</span><span>${pes(sm.ex+t.e)}</span></div><div class="grand"><span>Precio final</span><span>${pes(pc.total)}</span></div><div class="muted" style="font-size:.8rem">Dólar a $ ${num(P.dolar)}</div>`;
   saveDraft();
 }
 function saveDraft(){ save("alucast-borrador-v5",{items,extras,F,editIdx,cli:[$("c-nombre").value,$("c-tel").value,$("c-fecha").value]}) }
@@ -467,7 +480,7 @@ $("extras").onclick=e=>{const i=e.target.dataset.exdel; if(i!==undefined){extras
 $("btn-extra").onclick=()=>{extras.push({c:"",monto:""});renderExtras();render();$("extras").querySelector(".extra-row:last-child input")?.focus()};
 $("btn-nuevo").onclick=()=>{$("conf-nuevo").hidden=false};
 $("conf-no").onclick=()=>{$("conf-nuevo").hidden=true};
-$("conf-si").onclick=()=>{items=[];extras=[{c:"Mano de obra",monto:""},{c:"Extras",monto:""}];editIdx=-1;F=blank();
+$("conf-si").onclick=()=>{items=[];extras=[];editIdx=-1;F=blank();
   ["c-nombre","c-tel"].forEach(id=>$(id).value="");$("c-fecha").value=hoy();
   $("conf-nuevo").hidden=true;$("copia").hidden=true;numero++;save("alucast-num",numero);renderExtras();renderForm();render();toast("Presupuesto nuevo listo")};
 $("btn-guardar").onclick=()=>{if(!items.length){toast("Agregá al menos una ventana");return}
@@ -675,7 +688,7 @@ else{
   items=[{linea:"Probba",nombre:"Ventana living 3 × 1,5 m",acabado:"Negro",
     alu:[{n:"RIEL PROBBA",m:"6"},{n:"LATERAL MARCO",m:"3"},{n:"ENGANCHE HOJA",m:"3"},{n:"LATERAL HOJA",m:"3"},{n:"DIVISOR HOJA",m:"6"}],
     acc:[{n:"MANIJAS",q:"2"}], vid:{cant:"1",ancho:"3",alto:"1.5"}}];
-  extras=[{c:"Mano de obra",monto:""},{c:"Extras",monto:""}];
+  extras=[];
   F=blank(); F.alu[0].m="2.8";
 }
 if(!$("c-fecha").value) $("c-fecha").value=hoy();
