@@ -107,7 +107,7 @@ td .d{color:var(--muted);font-size:.8rem}
   <header class="brand">
     <div>
       <div class="logo">Alu<span>cast</span></div>
-      <div class="sub">Aberturas de aluminio · Presupuestador · <span title="Versión de la app">versión 7</span></div>
+      <div class="sub">Aberturas de aluminio · Presupuestador · <span title="Versión de la app">versión 8</span></div>
     </div>
     <div class="tabs" role="tablist">
       <button class="tab" role="tab" id="t-presu" aria-selected="true">Presupuesto</button>
@@ -347,7 +347,8 @@ const perfilDe=(n,lin)=>L(lin).perfiles.find(p=>p.n===n);
 function precioKg(p,k){ const v=p?.precio?.[k]; return (v!==undefined&&v!==""&&v!==null)? +v : (P.acabados[k]??0) }
 const accUsd=(n,lin)=>L(lin).accesorios.find(a=>a.n===n)?.usd??0;
 const cantV=v=>Math.max(1,parseInt(v.cant)||1);
-function lineaAlu(l,lin,k=1){ const m=(+l.m||0)*k, b=m>0?Math.ceil(m/P.barra-1e-9):0; return {b, mc:b*P.barra, kg:b*P.barra*kgm(l.n,lin)} }
+// kg según los metros cargados; si "cobrar barra entera" está activo, según las barras completas
+function lineaAlu(l,lin,k=1){ const m=(+l.m||0)*k, b=m>0?Math.ceil(m/P.barra-1e-9):0; const mc=P.cobrarBarra? b*P.barra : m; return {b, m, mc, kg:mc*kgm(l.n,lin)} }
 function calc(v){
   const k=cantV(v);
   const kg=v.alu.reduce((s,l)=>s+lineaAlu(l,v.linea,k).kg,0);
@@ -373,7 +374,7 @@ function renderForm(){
   $("l-alu").innerHTML=F.alu.map((l,i)=>`<tr><td><select data-al="${i}" data-f="n">${optPerf(l.n)}</select></td><td class="n"><input type="text" inputmode="decimal" autocomplete="off" min="0" step="0.01" inputmode="decimal" data-al="${i}" data-f="m" value="${l.m}" placeholder="0"></td><td class="n" id="ab-${i}"></td><td class="n" id="ak-${i}"></td><td><button class="x" data-aldel="${i}" aria-label="Quitar">×</button></td></tr>`).join("");
   $("l-acc").innerHTML=F.acc.map((l,i)=>`<tr><td><select data-ac="${i}" data-f="n">${optAcc(l.n)}</select></td><td class="n"><input type="text" inputmode="decimal" autocomplete="off" min="0" step="1" data-ac="${i}" data-f="q" value="${l.q}" placeholder="0"></td><td class="n" id="cu-${i}"></td><td><button class="x" data-acdel="${i}" aria-label="Quitar">×</button></td></tr>`).join("");
   $("g-cant").value=F.vid.cant; $("g-ancho").value=F.vid.ancho; $("g-alto").value=F.vid.alto;
-  $("nota-barra").textContent=`Se cobran barras enteras de ${num(P.barra,1)} m. Si ponés ${num(P.barra*0.8,2)} m se cobra una barra (${num(P.barra,2)} m); si ponés ${num(P.barra+0.5,2)} m se cobran dos.`;
+  $("nota-barra").textContent= P.cobrarBarra ? `Se cobran barras enteras de ${num(P.barra,2)} m (se cambia en Lista de precios → Parámetros).` : `Los kg se calculan con los metros que ponés. "Barras" te muestra cuántas barras de ${num(P.barra,2)} m vas a necesitar.`;
   $("v-titulo").textContent = editIdx>=0 ? `Editando ventana ${editIdx+1}` : "Nueva ventana";
   $("btn-add").textContent = editIdx>=0 ? "Guardar cambios" : "Guardar ventana en el presupuesto";
   $("btn-cancel").hidden = editIdx<0;
@@ -381,7 +382,7 @@ function renderForm(){
 }
 function updateForm(){
   const kq=cantV(F);
-  F.alu.forEach((l,i)=>{const r=lineaAlu(l,F.linea,kq); $("ab-"+i).textContent=r.b?`${r.b} (${num(r.mc,1)} m)`:"–"; $("ak-"+i).textContent=r.kg?num(r.kg,3):"–"});
+  F.alu.forEach((l,i)=>{const r=lineaAlu(l,F.linea,kq); $("ab-"+i).textContent=r.b?`${r.b} (${num(r.b*P.barra,2)} m)`:"–"; $("ak-"+i).textContent=r.kg?num(r.kg,3):"–"});
   F.acc.forEach((l,i)=>{const u=(+l.q||0)*accUsd(l.n,F.linea); $("cu-"+i).textContent=u?num(u):"–"});
   const c=calc(F);
   $("g-m2").value=num(c.m2);
@@ -549,7 +550,7 @@ function abrir(n){ const q=load("alucast-hist-v4",[]).find(x=>x.num==n); if(!q)r
 function renderPrecios(){
   $("p-gen").innerHTML=`<label>Dólar (media BROU)<input value="$ ${num(P.dolar)}" readonly tabindex="-1" title="Se carga arriba en la pestaña Presupuesto"></label>`+
     Object.keys(P.acabados).map(k=>`<label>Precio general ${esc(k.toLowerCase())} (U$S/kg)<input type="text" inputmode="decimal" autocomplete="off" step="0.01" data-acab="${esc(k)}" value="${P.acabados[k]}"></label>`).join("")+
-    `<label>Vidrio (U$S/m²)<input type="text" inputmode="decimal" autocomplete="off" step="0.01" data-g="vidrio" value="${P.vidrio}"></label><label>Largo de barra (m)<input type="text" inputmode="decimal" autocomplete="off" step="0.1" min="1" data-g="barra" value="${P.barra}"></label>`;
+    `<label>Cobrar aluminio por<select data-cb="1"><option value="0"${P.cobrarBarra?"":" selected"}>Metros cargados</option><option value="1"${P.cobrarBarra?" selected":""}>Barra entera</option></select></label><label>Vidrio (U$S/m²)<input type="text" inputmode="decimal" autocomplete="off" step="0.01" data-g="vidrio" value="${P.vidrio}"></label><label>Largo de barra (m)<input type="text" inputmode="decimal" autocomplete="off" step="0.1" min="1" data-g="barra" value="${P.barra}"></label>`;
   if(PL>=P.lineas.length) PL=0;
   const LN=P.lineas[PL];
   $("p-lineas").innerHTML=P.lineas.map((l,i)=>`<button class="tab" role="tab" data-pl="${i}" aria-selected="${i===PL}">${esc(l.n)}${faltanKg(l.n)?' <span class="chip">faltan kg</span>':""}</button>`).join("")+`<button class="btn ghost sm" id="add-linea">+ Nueva línea</button>`;
@@ -571,7 +572,8 @@ function rename(lista,oldN,newN){ const lin=P.lineas[PL].n; [F,...items].forEach
 function precioCambio(full){ save("alucast-lista-v5",P); if(full) renderPrecios(); else calcPrecios(); renderForm(); render() }
 $("v-precios").addEventListener("input",e=>{
   const el=e.target, d=el.dataset, v=el.inputMode==="decimal"?(+el.value||0):el.value;
-  if(d.g){ if(d.g==="barra"&&v<1) return; P[d.g]=v }
+  if(d.cb){ P.cobrarBarra=el.value==="1" }
+  else if(d.g){ if(d.g==="barra"&&v<1) return; P[d.g]=v }
   else if(d.acab){ P.acabados[d.acab]=v; document.querySelectorAll(`[data-pp][data-ac="${d.acab}"]`).forEach(x=>x.placeholder=v) }
   else if(d.pf!==undefined){ const p=P.lineas[PL].perfiles[+d.pf]; if(d.f==="n") rename("alu",p.n,v); p[d.f]=v; if(d.f==="kgm"){ const t=$("p-lineas").children[PL]; if(t) t.innerHTML=esc(P.lineas[PL].n)+(faltanKg(P.lineas[PL].n)?' <span class="chip">faltan kg</span>':"") } }
   else if(d.kb!==undefined){ const p=P.lineas[PL].perfiles[+d.kb]; p.kgm=(+el.value||0)/(P.barra||6.8);
