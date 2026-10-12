@@ -109,7 +109,7 @@ td .d{color:var(--muted);font-size:.8rem}
   <header class="brand">
     <div>
       <div class="logo">Alu<span>cast</span></div>
-      <div class="sub">Aberturas de aluminio · Presupuestador · <span title="Versión de la app">versión 11</span></div>
+      <div class="sub">Aberturas de aluminio · Presupuestador · <span title="Versión de la app">versión 12</span></div>
     </div>
     <div class="tabs" role="tablist">
       <button class="tab" role="tab" id="t-presu" aria-selected="true">Presupuesto</button>
@@ -174,6 +174,7 @@ td .d{color:var(--muted);font-size:.8rem}
 
         <h3 style="margin-top:16px">Vidrio <span style="text-transform:none;letter-spacing:0;font-weight:500">· paños de una ventana</span></h3>
         <div class="fields">
+          <label>Tipo de vidrio<select id="g-tipo"></select></label>
           <label>Cantidad<input id="g-cant" type="text" inputmode="decimal" autocomplete="off" min="0" step="1"></label>
           <label>Ancho (m)<input id="g-ancho" type="text" inputmode="decimal" autocomplete="off" min="0" step="0.01"></label>
           <label>Alto (m)<input id="g-alto" type="text" inputmode="decimal" autocomplete="off" min="0" step="0.01"></label>
@@ -314,6 +315,16 @@ td .d{color:var(--muted);font-size:.8rem}
       </div>
       <button class="btn ghost sm" id="add-acc" style="margin-top:10px">+ Agregar accesorio</button>
     </section>
+    <section class="panel">
+      <h2>Vidrios</h2>
+      <div class="tbl-wrap">
+        <table class="edit">
+          <thead><tr><th>Tipo de vidrio</th><th class="n">Precio U$S / m²</th><th></th></tr></thead>
+          <tbody id="p-vid"></tbody>
+        </table>
+      </div>
+      <button class="btn ghost sm" id="add-vid" style="margin-top:10px">+ Agregar vidrio</button>
+    </section>
     <div class="actions"><button class="btn ghost" id="btn-reset-precios">Volver a los precios de la planilla</button></div>
   </div>
 </div>
@@ -325,7 +336,7 @@ document.addEventListener("input",e=>{const el=e.target; if(el && el.inputMode==
 <script>
 // Valores de PRESUPUESTO_ALUCAST (hojas MATERIALES y PROBBA)
 const DEF = {
-  dolar:41, vidrio:10, barra:6.8,
+  dolar:41, vidrio:10, barra:6.8, vidrios:["3 mm","4 mm","5 mm","6 mm","Laminado","Fantasía"].map(n=>({n,usd:10})),
   acabados:{ "Negro":12, "Gris":10.5, "Anolok":14 },
   lineas:[
     {n:"Probba",
@@ -348,6 +359,8 @@ const num=(n,d=2)=>(+n||0).toLocaleString("es-UY",{minimumFractionDigits:d,maxim
 function load(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}}
 function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
 P = load("alucast-lista-v5", structuredClone(DEF));
+// Tipos de vidrio con su precio por m² (se crean una vez con el precio de vidrio que había)
+if(!Array.isArray(P.vidrios)){ const base=+P.vidrio||10; P.vidrios=["3 mm","4 mm","5 mm","6 mm","Laminado","Fantasía"].map(n=>({n,usd:base})); try{localStorage.setItem("alucast-lista-v5",JSON.stringify(P))}catch(e){} }
 // Las barras miden 6,80 m (antes se usaba 3 m): se corrige una sola vez en lo guardado
 if(!P.barra68){ if(+P.barra===3) P.barra=6.8; P.barra68=true; try{localStorage.setItem("alucast-lista-v5",JSON.stringify(P))}catch(e){} }
 numero = load("alucast-num", 1);
@@ -357,13 +370,14 @@ const L=n=>P.lineas.find(x=>x.n===n)||{n,perfiles:[],accesorios:[]};
 
 function blank(linea){
   const l=L(linea||P.lineas[0]?.n);
-  return {linea:l.n, nombre:"", cant:"1", ancho:"", alto:"", acabado:Object.keys(P.acabados)[0], alu:l.perfiles.map(p=>({n:p.n,m:""})), acc:l.accesorios.map(a=>({n:a.n,q:""})), vid:{cant:"",ancho:"",alto:""}, mo:"", ex:"", exs:[]};
+  return {linea:l.n, nombre:"", cant:"1", ancho:"", alto:"", acabado:Object.keys(P.acabados)[0], alu:l.perfiles.map(p=>({n:p.n,m:""})), acc:l.accesorios.map(a=>({n:a.n,q:""})), vid:{cant:"",ancho:"",alto:"",tipo:(P.vidrios&&P.vidrios.find(g=>g.n==="4 mm")||P.vidrios?.[0]||{}).n||""}, mo:"", ex:"", exs:[]};
 }
 
 // ---- cálculo (igual que la planilla, con barras enteras) ----
 const kgm=(n,lin)=>L(lin).perfiles.find(p=>p.n===n)?.kgm??0;
 const perfilDe=(n,lin)=>L(lin).perfiles.find(p=>p.n===n);
 function precioKg(p,k){ const v=p?.precio?.[k]; return (v!==undefined&&v!==""&&v!==null)? +v : (P.acabados[k]??0) }
+function precioVidrio(t){ const x=(P.vidrios||[]).find(g=>g.n===t); return x? (+x.usd||0) : (+P.vidrio||0) }
 const accUsd=(n,lin)=>L(lin).accesorios.find(a=>a.n===n)?.usd??0;
 const cantV=v=>Math.max(1,parseInt(v.cant)||1);
 // kg según los metros cargados; si "cobrar barra entera" está activo, según las barras completas
@@ -372,7 +386,7 @@ function calc(v){
   const k=cantV(v);
   const kg=v.alu.reduce((s,l)=>s+lineaAlu(l,v.linea,k).kg,0);
   const acc=v.acc.reduce((s,l)=>s+(+l.q||0)*accUsd(l.n,v.linea),0)*k;
-  const m2=(+v.vid.cant||0)*(+v.vid.ancho||0)*(+v.vid.alto||0)*k, vid=m2*P.vidrio;
+  const m2=(+v.vid.cant||0)*(+v.vid.ancho||0)*(+v.vid.alto||0)*k, vid=m2*precioVidrio(v.vid.tipo);
   const mo=(+v.mo||0), ex=(+v.ex||0)+(v.exs||[]).reduce((s,x)=>s+(+x.monto||0),0); // total para esta ventana, no se multiplica por la cantidad
   const por={}; Object.keys(P.acabados).forEach(ac=>{ const alu=v.alu.reduce((s,l)=>s+lineaAlu(l,v.linea,k).kg*precioKg(perfilDe(l.n,v.linea),ac),0); const u=alu+acc+vid; por[ac]={usd:u,pesos:u*P.dolar+mo+ex} });
   const sel=por[v.acabado]||{usd:0,pesos:0};
@@ -411,6 +425,7 @@ function updateForm(){
   F.acc.forEach((l,i)=>{const u=(+l.q||0)*accUsd(l.n,F.linea); $("cu-"+i).textContent=u?num(u):"–"});
   const c=calc(F);
   $("g-m2").value=num(c.m2);
+  const gt=$("g-tipo"); if(gt){ const opts=(P.vidrios||[]).map(g=>`<option${g.n===F.vid.tipo?" selected":""}>${esc(g.n)}</option>`).join(""); if(gt.dataset.o!==opts){ gt.innerHTML=opts; gt.dataset.o=opts } if(F.vid.tipo && gt.value!==F.vid.tipo) gt.value=F.vid.tipo; if(!F.vid.tipo && gt.value){ F.vid.tipo=gt.value } }
   $("fin").innerHTML=Object.keys(P.acabados).map(k=>`<label class="opt"><input type="radio" name="acabado" value="${esc(k)}"${F.acabado===k?" checked":""}><span><span class="u">${c.k>1?c.k+" ventanas":"Ventana"} en ${esc(k.toLowerCase())}</span><span class="p">${pes(c.por[k].pesos)}</span><span class="u">U$S ${num(c.por[k].usd)}${c.k>1?` · ${pes(c.por[k].pesos/c.k)} c/u`:""}</span></span></label>`).join("")+
     `<div class="muted" style="font-size:.82rem;align-self:center">${c.k>1?`Total de ${c.k} ventanas. `:""}Aluminio ${num(c.kg,3)} kg · Accesorios U$S ${num(c.acc)} · Vidrio U$S ${num(c.vid)}${(c.mo||c.ex)?` · Mano de obra ${pes(c.mo)} · Extras ${pes(c.ex)} (incluidos)`:""}</div>`;
   $("ab-head").textContent = kq>1 ? `Barras (${kq} vent.)` : "Barras";
@@ -427,6 +442,7 @@ $("v-presu").addEventListener("input",e=>{
   if(el.id==="v-ancho"||el.id==="v-alto"){ const k=el.id.slice(2), prev=F[k]??"";
     if(F.vid[k]===""||F.vid[k]===prev){ F.vid[k]=el.value; $("g-"+k).value=el.value; if(F.vid.cant==="") { F.vid.cant="1"; $("g-cant").value="1" } }
     F[k]=el.value; updateForm(); return }
+  if(el.id==="g-tipo"){ F.vid.tipo=el.value; updateForm(); return }
   if(el.id.startsWith("g-")){ F.vid[el.id.slice(2)]=el.value; updateForm(); return }
   if(el.name==="acabado"){ F.acabado=el.value; updateForm(); return }
   if(d.ex!==undefined){ extras[+d.ex][d.f]=el.value; render(); return }
@@ -479,7 +495,7 @@ function render(){
   $("items").innerHTML = items.length ? items.map((it,i)=>{const c=calc(it);
     const det=it.alu.filter(l=>+l.m).map(l=>`${esc(l.n.toLowerCase())} ${num(+l.m)} m`).join(" · ");
     const med=(+it.ancho&&+it.alto)?` · ${num(+it.ancho)} × ${num(+it.alto)} m`:"";
-    return `<tr><td>${i+1}</td><td><b>${c.k} ×</b> ${esc(it.nombre)}${med}<span class="chip">${esc(it.linea)}</span><span class="chip">${esc(it.acabado)}</span><div class="d">${num(c.kg,2)} kg aluminio${c.m2?` · ${num(c.m2)} m² vidrio`:""}</div>${det?`<div class="d">Por ventana: ${det}</div>`:""}</td><td class="n">${pes(pc.out[i])}</td><td style="white-space:nowrap"><button class="btn ghost sm" data-edit="${i}">Editar</button><button class="x" data-del="${i}" aria-label="Quitar">×</button></td></tr>`}).join("")
+    return `<tr><td>${i+1}</td><td><b>${c.k} ×</b> ${esc(it.nombre)}${med}<span class="chip">${esc(it.linea)}</span><span class="chip">${esc(it.acabado)}</span><div class="d">${num(c.kg,2)} kg aluminio${c.m2?` · ${num(c.m2)} m² vidrio${it.vid?.tipo?" "+esc(it.vid.tipo):""}`:""}</div>${det?`<div class="d">Por ventana: ${det}</div>`:""}</td><td class="n">${pes(pc.out[i])}</td><td style="white-space:nowrap"><button class="btn ghost sm" data-edit="${i}">Editar</button><button class="x" data-del="${i}" aria-label="Quitar">×</button></td></tr>`}).join("")
     : `<tr><td colspan="4" class="empty">Todavía no hay ventanas. Cargá los metros a la izquierda y tocá "Agregar al presupuesto".</td></tr>`;
   const t=totals();
   $("totales").innerHTML=`<div class="grand"><span>Precio final</span><span>${pes(pc.total)}</span></div>`;
@@ -583,10 +599,14 @@ function abrir(n){ const q=load("alucast-hist-v4",[]).find(x=>x.num==n); if(!q)r
   numero=q.num; items=q.items.map(it=>({linea:"Probba",...it})); extras=q.extras||[]; $("c-nombre").value=q.cli; $("c-tel").value=q.tel||""; $("c-fecha").value=q.fecha||hoy(); editIdx=-1; F=blank(); renderExtras(); renderForm(); show("presu"); render()};
 
 // ---- lista de precios ----
+function renderVidrios(){
+  $("p-vid").innerHTML=(P.vidrios||[]).map((g,i)=>`<tr><td><input data-gv="${i}" data-f="n" value="${esc(g.n)}"></td><td class="n"><input type="text" inputmode="decimal" autocomplete="off" data-gv="${i}" data-f="usd" value="${g.usd}"></td><td><button class="x" data-gvdel="${i}" aria-label="Quitar">×</button></td></tr>`).join("");
+}
 function renderPrecios(){
+  renderVidrios();
   $("p-gen").innerHTML=`<label>Dólar (media BROU)<input value="$ ${num(P.dolar)}" readonly tabindex="-1" title="Se carga arriba en la pestaña Presupuesto"></label>`+
     Object.keys(P.acabados).map(k=>`<label>Precio general ${esc(k.toLowerCase())} (U$S/kg)<input type="text" inputmode="decimal" autocomplete="off" step="0.01" data-acab="${esc(k)}" value="${P.acabados[k]}"></label>`).join("")+
-    `<label>Cobrar aluminio por<select data-cb="1"><option value="0"${P.cobrarBarra?"":" selected"}>Metros cargados</option><option value="1"${P.cobrarBarra?" selected":""}>Barra entera</option></select></label><label>Vidrio (U$S/m²)<input type="text" inputmode="decimal" autocomplete="off" step="0.01" data-g="vidrio" value="${P.vidrio}"></label><label>Largo de barra (m)<input type="text" inputmode="decimal" autocomplete="off" step="0.1" min="1" data-g="barra" value="${P.barra}"></label>`;
+    `<label>Cobrar aluminio por<select data-cb="1"><option value="0"${P.cobrarBarra?"":" selected"}>Metros cargados</option><option value="1"${P.cobrarBarra?" selected":""}>Barra entera</option></select></label><label>Largo de barra (m)<input type="text" inputmode="decimal" autocomplete="off" step="0.1" min="1" data-g="barra" value="${P.barra}"></label>`;
   if(PL>=P.lineas.length) PL=0;
   const LN=P.lineas[PL];
   $("p-lineas").innerHTML=P.lineas.map((l,i)=>`<button class="tab" role="tab" data-pl="${i}" aria-selected="${i===PL}">${esc(l.n)}${faltanKg(l.n)?' <span class="chip">faltan kg</span>':""}</button>`).join("")+`<button class="btn ghost sm" id="add-linea">+ Nueva línea</button>`;
@@ -615,6 +635,7 @@ $("v-precios").addEventListener("input",e=>{
   else if(d.kb!==undefined){ const p=P.lineas[PL].perfiles[+d.kb]; p.kgm=(+el.value||0)/(P.barra||6.8);
     const t=$("p-lineas").children[PL]; if(t) t.innerHTML=esc(P.lineas[PL].n)+(faltanKg(P.lineas[PL].n)?' <span class="chip">faltan kg</span>':"") }
   else if(d.pp!==undefined){ const p=P.lineas[PL].perfiles[+d.pp]; p.precio=p.precio||{}; if(el.value==="") delete p.precio[d.ac]; else p.precio[d.ac]=+el.value||0 }
+  else if(d.gv!==undefined){ const g=P.vidrios[+d.gv]; if(d.f==="n"){ const nn=el.value; [F,...items].forEach(x=>{ if(x.vid&&x.vid.tipo===g.n) x.vid.tipo=nn }); g.n=nn } else g.usd=+el.value||0 }
   else if(d.ax!==undefined){ const a=P.lineas[PL].accesorios[+d.ax]; if(d.f==="n") rename("acc",a.n,v); a[d.f]=v }
   else if(el.id==="p-lnombre"){ const nn=el.value.trim(), old=P.lineas[PL].n; if(!nn||P.lineas.some((l,i)=>i!==PL&&l.n===nn)) return;
     [F,...items].forEach(x=>{ if(x.linea===old) x.linea=nn }); P.lineas[PL].n=nn; $("p-lt1").textContent=$("p-lt2").textContent=nn;
@@ -630,7 +651,9 @@ $("v-precios").addEventListener("click",e=>{const d=e.target.dataset, LN=P.linea
   if(e.target.id==="p-ldel-no"){ $("p-ldel-conf").hidden=true; return }
   if(e.target.id==="p-ldel-si"){ P.lineas.splice(PL,1); PL=0; if(!P.lineas.some(l=>l.n===F.linea)) F=blank(); precioCambio(true); toast("Línea borrada"); return }
   if(d.pfdel!==undefined){LN.perfiles.splice(+d.pfdel,1);precioCambio(true)}
-  if(d.axdel!==undefined){LN.accesorios.splice(+d.axdel,1);precioCambio(true)}});
+  if(d.axdel!==undefined){LN.accesorios.splice(+d.axdel,1);precioCambio(true)}
+  if(d.gvdel!==undefined){ if((P.vidrios||[]).length<2){toast("Tiene que quedar al menos un vidrio");return} P.vidrios.splice(+d.gvdel,1); precioCambio(true) }});
+$("add-vid").onclick=()=>{P.vidrios=P.vidrios||[]; P.vidrios.push({n:"Nuevo vidrio "+(P.vidrios.length+1),usd:0}); precioCambio(true); const ins=$("p-vid").querySelectorAll('[data-f="n"]'); ins[ins.length-1]?.select()};
 $("add-perf").onclick=()=>{const p=P.lineas[PL].perfiles;p.push({n:"NUEVO PERFIL "+(p.length+1),kgm:0});precioCambio(true)};
 $("add-acc").onclick=()=>{const a=P.lineas[PL].accesorios;a.push({n:"NUEVO ACCESORIO "+(a.length+1),usd:0});precioCambio(true)};
 $("btn-reset-precios").onclick=()=>{P=structuredClone(DEF);PL=0;if(!P.lineas.some(l=>l.n===F.linea))F=blank();precioCambio(true);renderDolar();toast("Precios de la planilla restaurados")};
