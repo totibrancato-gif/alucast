@@ -85,6 +85,8 @@ td .d{color:var(--muted);font-size:.8rem}
 .extra-row{display:grid;grid-template-columns:minmax(0,1fr) 120px auto;gap:6px;align-items:center;margin-bottom:6px}
 .chip{display:inline-block;font-size:.72rem;font-weight:600;padding:1px 7px;border-radius:10px;background:var(--accent-soft);color:var(--fg);margin-left:4px}
 .tab .chip,.tab .badge{pointer-events:none}
+.mo-box{margin-top:16px;border:1px solid var(--accent);background:var(--accent-soft);border-radius:6px;padding:14px}
+.mo-box.falta{outline:3px solid var(--danger);outline-offset:2px}
 .badge{display:inline-block;min-width:1.5em;text-align:center;font-size:.75rem;font-weight:700;padding:1px 6px;border-radius:10px;background:var(--danger);color:var(--surface);margin-left:4px;font-variant-numeric:tabular-nums}
 .chip.late{background:var(--danger);color:var(--surface)}
 .chip.ok{background:var(--fg);color:var(--bg)}
@@ -107,7 +109,7 @@ td .d{color:var(--muted);font-size:.8rem}
   <header class="brand">
     <div>
       <div class="logo">Alu<span>cast</span></div>
-      <div class="sub">Aberturas de aluminio · Presupuestador · <span title="Versión de la app">versión 10</span></div>
+      <div class="sub">Aberturas de aluminio · Presupuestador · <span title="Versión de la app">versión 11</span></div>
     </div>
     <div class="tabs" role="tablist">
       <button class="tab" role="tab" id="t-presu" aria-selected="true">Presupuesto</button>
@@ -178,15 +180,23 @@ td .d{color:var(--muted);font-size:.8rem}
           <label>M² totales<input id="g-m2" readonly tabindex="-1"></label>
         </div>
 
-        <h3 style="margin-top:16px">Mano de obra y extras <span style="text-transform:none;letter-spacing:0;font-weight:500">· en pesos, total para esta ventana (no se multiplica por la cantidad) · no los ve el cliente</span></h3>
-        <div class="fields">
-          <label>Mano de obra ($)<input id="v-mo" type="text" inputmode="decimal" autocomplete="off" placeholder="0"></label>
-          <label>Extras ($)<input id="v-ex" type="text" inputmode="decimal" autocomplete="off" placeholder="0"></label>
+        <div class="mo-box" id="mo-box">
+          <h3 style="margin:0 0 4px;color:var(--fg)">Mano de obra y extras de esta ventana</h3>
+          <p class="note" style="margin:0 0 10px">En pesos, el total para esta ventana (no se multiplica por la cantidad). Van incluidos en su precio; el cliente no los ve por separado.</p>
+          <label style="max-width:220px">Mano de obra ($)<input id="v-mo" type="text" inputmode="decimal" autocomplete="off" placeholder="0"></label>
+          <div style="margin-top:10px;font-size:.78rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Extras</div>
+          <div id="v-exs" style="margin-top:4px"></div>
+          <button class="btn ghost sm" id="add-ex">+ Agregar extra</button>
         </div>
 
         <h3 style="margin-top:18px">Precio de la ventana · elegí el acabado</h3>
         <div class="fin" id="fin"></div>
 
+        <div class="confirm" id="conf-mo" hidden style="margin-top:12px">
+          <span>Esta ventana no tiene mano de obra ni extras. ¿La guardás igual?</span>
+          <button class="btn sm" id="conf-mo-cargar">Cargar mano de obra</button>
+          <button class="btn ghost sm" id="conf-mo-si">Guardar sin mano de obra</button>
+        </div>
         <div class="actions" style="margin-top:14px">
           <button class="btn" id="btn-add">Agregar al presupuesto</button>
           <button class="btn ghost" id="btn-cancel" hidden>Cancelar edición</button>
@@ -347,7 +357,7 @@ const L=n=>P.lineas.find(x=>x.n===n)||{n,perfiles:[],accesorios:[]};
 
 function blank(linea){
   const l=L(linea||P.lineas[0]?.n);
-  return {linea:l.n, nombre:"", cant:"1", ancho:"", alto:"", acabado:Object.keys(P.acabados)[0], alu:l.perfiles.map(p=>({n:p.n,m:""})), acc:l.accesorios.map(a=>({n:a.n,q:""})), vid:{cant:"",ancho:"",alto:""}, mo:"", ex:""};
+  return {linea:l.n, nombre:"", cant:"1", ancho:"", alto:"", acabado:Object.keys(P.acabados)[0], alu:l.perfiles.map(p=>({n:p.n,m:""})), acc:l.accesorios.map(a=>({n:a.n,q:""})), vid:{cant:"",ancho:"",alto:""}, mo:"", ex:"", exs:[]};
 }
 
 // ---- cálculo (igual que la planilla, con barras enteras) ----
@@ -363,7 +373,7 @@ function calc(v){
   const kg=v.alu.reduce((s,l)=>s+lineaAlu(l,v.linea,k).kg,0);
   const acc=v.acc.reduce((s,l)=>s+(+l.q||0)*accUsd(l.n,v.linea),0)*k;
   const m2=(+v.vid.cant||0)*(+v.vid.ancho||0)*(+v.vid.alto||0)*k, vid=m2*P.vidrio;
-  const mo=(+v.mo||0), ex=(+v.ex||0); // monto total para esta ventana, no se multiplica por la cantidad
+  const mo=(+v.mo||0), ex=(+v.ex||0)+(v.exs||[]).reduce((s,x)=>s+(+x.monto||0),0); // total para esta ventana, no se multiplica por la cantidad
   const por={}; Object.keys(P.acabados).forEach(ac=>{ const alu=v.alu.reduce((s,l)=>s+lineaAlu(l,v.linea,k).kg*precioKg(perfilDe(l.n,v.linea),ac),0); const u=alu+acc+vid; por[ac]={usd:u,pesos:u*P.dolar+mo+ex} });
   const sel=por[v.acabado]||{usd:0,pesos:0};
   return {k,kg,acc,m2,vid,mo,ex,por,usd:sel.usd,pesos:sel.pesos,mat:sel.usd*P.dolar};
@@ -378,9 +388,14 @@ function renderLineas(){
   const w=$("aviso-linea"); w.hidden=!faltanKg(F.linea);
   w.innerHTML=`Faltan los kg por metro de algunos perfiles de <b>${esc(F.linea)}</b>. Completalos en <button class="btn ghost sm" data-goto="${esc(F.linea)}">Lista de precios</button>`;
 }
+function renderExs(){
+  if(!F.exs) F.exs=[];
+  if(+F.ex && !F.exs.length){ F.exs.push({c:"Extras",monto:F.ex}); F.ex="" }
+  $("v-exs").innerHTML=F.exs.map((x,i)=>`<div class="extra-row"><input data-vx="${i}" data-f="c" value="${esc(x.c)}" placeholder="Concepto (ej: flete, colocación)"><input data-vx="${i}" data-f="monto" type="text" inputmode="decimal" autocomplete="off" value="${esc(x.monto)}" placeholder="$"><button class="x" data-vxdel="${i}" aria-label="Quitar">×</button></div>`).join("");
+}
 function renderForm(){
   renderLineas();
-  $("v-nombre").value=F.nombre; $("v-mo").value=F.mo??""; $("v-ex").value=F.ex??""; $("v-cant").value=F.cant??"1"; $("v-ancho").value=F.ancho??""; $("v-alto").value=F.alto??"";
+  $("v-nombre").value=F.nombre; $("v-mo").value=F.mo??""; renderExs(); $("v-cant").value=F.cant??"1"; $("v-ancho").value=F.ancho??""; $("v-alto").value=F.alto??"";
   $("l-alu").innerHTML=F.alu.map((l,i)=>`<tr><td><select data-al="${i}" data-f="n">${optPerf(l.n)}</select></td><td class="n"><input type="text" inputmode="decimal" autocomplete="off" min="0" step="0.01" inputmode="decimal" data-al="${i}" data-f="m" value="${l.m}" placeholder="0"></td><td class="n" id="ab-${i}"></td><td class="n" id="ak-${i}"></td><td><button class="x" data-aldel="${i}" aria-label="Quitar">×</button></td></tr>`).join("");
   $("l-acc").innerHTML=F.acc.map((l,i)=>`<tr><td><select data-ac="${i}" data-f="n">${optAcc(l.n)}</select></td><td class="n"><input type="text" inputmode="decimal" autocomplete="off" min="0" step="1" data-ac="${i}" data-f="q" value="${l.q}" placeholder="0"></td><td class="n" id="cu-${i}"></td><td><button class="x" data-acdel="${i}" aria-label="Quitar">×</button></td></tr>`).join("");
   $("g-cant").value=F.vid.cant; $("g-ancho").value=F.vid.ancho; $("g-alto").value=F.vid.alto;
@@ -406,7 +421,8 @@ $("v-presu").addEventListener("input",e=>{
   if(d.al!==undefined){ F.alu[+d.al][d.f]=el.value; updateForm(); return }
   if(d.ac!==undefined){ F.acc[+d.ac][d.f]=el.value; updateForm(); return }
   if(el.id==="v-nombre"){ F.nombre=el.value; saveDraft(); return }
-  if(el.id==="v-mo"||el.id==="v-ex"){ F[el.id.slice(2)]=el.value; updateForm(); return }
+  if(el.id==="v-mo"){ F.mo=el.value; $("mo-box").classList.remove("falta"); $("conf-mo").hidden=true; updateForm(); return }
+  if(d.vx!==undefined){ F.exs[+d.vx][d.f]=el.value; $("mo-box").classList.remove("falta"); $("conf-mo").hidden=true; updateForm(); return }
   if(el.id==="v-cant"){ F.cant=el.value; updateForm(); return }
   if(el.id==="v-ancho"||el.id==="v-alto"){ const k=el.id.slice(2), prev=F[k]??"";
     if(F.vid[k]===""||F.vid[k]===prev){ F.vid[k]=el.value; $("g-"+k).value=el.value; if(F.vid.cant==="") { F.vid.cant="1"; $("g-cant").value="1" } }
@@ -424,13 +440,20 @@ $("add-acc-l").onclick=()=>{ const a=L(F.linea).accesorios; if(!a.length){toast(
 $("lineas").onclick=e=>{const n=e.target.dataset.lin; if(n===undefined||n===F.linea) return;
   const nuevo=blank(n); nuevo.nombre=F.nombre; nuevo.acabado=F.acabado; nuevo.vid=F.vid; F=nuevo; renderForm()};
 $("aviso-linea").onclick=e=>{const n=e.target.dataset.goto; if(n===undefined) return; PL=Math.max(0,P.lineas.findIndex(l=>l.n===n)); show("precios")};
+let sinMoOk=false;
+$("conf-mo-cargar").onclick=()=>{ $("conf-mo").hidden=true; $("mo-box").scrollIntoView({behavior:"smooth",block:"center"}); $("v-mo").focus({preventScroll:true}) };
+$("conf-mo-si").onclick=()=>{ sinMoOk=true; $("conf-mo").hidden=true; $("btn-add").click() };
 $("btn-add").onclick=()=>{
   const c=calc(F); if(c.usd<=0){toast("Cargá metros de aluminio, accesorios o vidrio");return}
+  if(!c.mo && !c.ex && !sinMoOk){ $("conf-mo").hidden=false; $("mo-box").classList.add("falta"); $("conf-mo").scrollIntoView({behavior:"smooth",block:"center"}); return }
+  sinMoOk=false; $("conf-mo").hidden=true; $("mo-box").classList.remove("falta");
   const v=structuredClone(F); v.cant=String(cantV(v)); if(!v.nombre) v.nombre="Ventana "+(editIdx>=0?editIdx+1:items.length+1);
   if(editIdx>=0){ items[editIdx]=v; toast("Ventana actualizada") } else { items.push(v); toast("Ventana guardada. Cargá la siguiente") }
   const acab=F.acabado; editIdx=-1; F=blank(v.linea); F.acabado=acab; renderForm(); render();
   $("v-titulo").scrollIntoView({behavior:"smooth",block:"start"}); $("v-nombre").focus({preventScroll:true});
 };
+$("v-exs").addEventListener("click",e=>{const i=e.target.dataset.vxdel; if(i!==undefined){F.exs.splice(+i,1);renderExs();updateForm()}});
+$("add-ex").onclick=()=>{F.exs=F.exs||[]; F.exs.push({c:"",monto:""}); renderExs(); $("v-exs").querySelector(".extra-row:last-child input")?.focus()};
 $("btn-cancel").onclick=()=>{editIdx=-1;F=blank();renderForm()};
 
 // ---- presupuesto ----
