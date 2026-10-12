@@ -303,7 +303,7 @@ td .d{color:var(--muted);font-size:.8rem}
 <script>
 // Valores de PRESUPUESTO_ALUCAST (hojas MATERIALES y PROBBA)
 const DEF = {
-  dolar:41, vidrio:10, barra:3,
+  dolar:41, vidrio:10, barra:6.8,
   acabados:{ "Negro":12, "Gris":10.5, "Anolok":14 },
   lineas:[
     {n:"Probba",
@@ -326,6 +326,8 @@ const num=(n,d=2)=>(+n||0).toLocaleString("es-UY",{minimumFractionDigits:d,maxim
 function load(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}}
 function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
 P = load("alucast-lista-v5", structuredClone(DEF));
+// Las barras miden 6,80 m (antes se usaba 3 m): se corrige una sola vez en lo guardado
+if(!P.barra68){ if(+P.barra===3) P.barra=6.8; P.barra68=true; try{localStorage.setItem("alucast-lista-v5",JSON.stringify(P))}catch(e){} }
 numero = load("alucast-num", 1);
 let PL = 0; // línea elegida en la lista de precios
 const hoy=()=>new Date().toISOString().slice(0,10);
@@ -368,7 +370,7 @@ function renderForm(){
   $("l-alu").innerHTML=F.alu.map((l,i)=>`<tr><td><select data-al="${i}" data-f="n">${optPerf(l.n)}</select></td><td class="n"><input type="number" min="0" step="0.01" inputmode="decimal" data-al="${i}" data-f="m" value="${l.m}" placeholder="0"></td><td class="n" id="ab-${i}"></td><td class="n" id="ak-${i}"></td><td><button class="x" data-aldel="${i}" aria-label="Quitar">×</button></td></tr>`).join("");
   $("l-acc").innerHTML=F.acc.map((l,i)=>`<tr><td><select data-ac="${i}" data-f="n">${optAcc(l.n)}</select></td><td class="n"><input type="number" min="0" step="1" data-ac="${i}" data-f="q" value="${l.q}" placeholder="0"></td><td class="n" id="cu-${i}"></td><td><button class="x" data-acdel="${i}" aria-label="Quitar">×</button></td></tr>`).join("");
   $("g-cant").value=F.vid.cant; $("g-ancho").value=F.vid.ancho; $("g-alto").value=F.vid.alto;
-  $("nota-barra").textContent=`Se cobran barras enteras de ${num(P.barra,1)} m. Ejemplo: si ponés 2,80 m se cobran 3 m.`;
+  $("nota-barra").textContent=`Se cobran barras enteras de ${num(P.barra,1)} m. Si ponés ${num(P.barra*0.8,2)} m se cobra una barra (${num(P.barra,2)} m); si ponés ${num(P.barra+0.5,2)} m se cobran dos.`;
   $("v-titulo").textContent = editIdx>=0 ? `Editando ventana ${editIdx+1}` : "Nueva ventana";
   $("btn-add").textContent = editIdx>=0 ? "Guardar cambios" : "Guardar ventana en el presupuesto";
   $("btn-cancel").hidden = editIdx<0;
@@ -569,7 +571,7 @@ $("v-precios").addEventListener("input",e=>{
   if(d.g){ if(d.g==="barra"&&v<1) return; P[d.g]=v }
   else if(d.acab){ P.acabados[d.acab]=v; document.querySelectorAll(`[data-pp][data-ac="${d.acab}"]`).forEach(x=>x.placeholder=v) }
   else if(d.pf!==undefined){ const p=P.lineas[PL].perfiles[+d.pf]; if(d.f==="n") rename("alu",p.n,v); p[d.f]=v; if(d.f==="kgm"){ const t=$("p-lineas").children[PL]; if(t) t.innerHTML=esc(P.lineas[PL].n)+(faltanKg(P.lineas[PL].n)?' <span class="chip">faltan kg</span>':"") } }
-  else if(d.kb!==undefined){ const p=P.lineas[PL].perfiles[+d.kb]; p.kgm=(+el.value||0)/(P.barra||3);
+  else if(d.kb!==undefined){ const p=P.lineas[PL].perfiles[+d.kb]; p.kgm=(+el.value||0)/(P.barra||6.8);
     const t=$("p-lineas").children[PL]; if(t) t.innerHTML=esc(P.lineas[PL].n)+(faltanKg(P.lineas[PL].n)?' <span class="chip">faltan kg</span>':"") }
   else if(d.pp!==undefined){ const p=P.lineas[PL].perfiles[+d.pp]; p.precio=p.precio||{}; if(el.value==="") delete p.precio[d.ac]; else p.precio[d.ac]=+el.value||0 }
   else if(d.ax!==undefined){ const a=P.lineas[PL].accesorios[+d.ax]; if(d.f==="n") rename("acc",a.n,v); a[d.f]=v }
