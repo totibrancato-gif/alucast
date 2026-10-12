@@ -107,7 +107,7 @@ td .d{color:var(--muted);font-size:.8rem}
   <header class="brand">
     <div>
       <div class="logo">Alu<span>cast</span></div>
-      <div class="sub">Aberturas de aluminio · Presupuestador · <span title="Versión de la app">versión 9</span></div>
+      <div class="sub">Aberturas de aluminio · Presupuestador · <span title="Versión de la app">versión 10</span></div>
     </div>
     <div class="tabs" role="tablist">
       <button class="tab" role="tab" id="t-presu" aria-selected="true">Presupuesto</button>
@@ -178,7 +178,7 @@ td .d{color:var(--muted);font-size:.8rem}
           <label>M² totales<input id="g-m2" readonly tabindex="-1"></label>
         </div>
 
-        <h3 style="margin-top:16px">Mano de obra y extras <span style="text-transform:none;letter-spacing:0;font-weight:500">· en pesos, por una ventana · no los ve el cliente</span></h3>
+        <h3 style="margin-top:16px">Mano de obra y extras <span style="text-transform:none;letter-spacing:0;font-weight:500">· en pesos, total para esta ventana (no se multiplica por la cantidad) · no los ve el cliente</span></h3>
         <div class="fields">
           <label>Mano de obra ($)<input id="v-mo" type="text" inputmode="decimal" autocomplete="off" placeholder="0"></label>
           <label>Extras ($)<input id="v-ex" type="text" inputmode="decimal" autocomplete="off" placeholder="0"></label>
@@ -363,7 +363,7 @@ function calc(v){
   const kg=v.alu.reduce((s,l)=>s+lineaAlu(l,v.linea,k).kg,0);
   const acc=v.acc.reduce((s,l)=>s+(+l.q||0)*accUsd(l.n,v.linea),0)*k;
   const m2=(+v.vid.cant||0)*(+v.vid.ancho||0)*(+v.vid.alto||0)*k, vid=m2*P.vidrio;
-  const mo=(+v.mo||0)*k, ex=(+v.ex||0)*k;
+  const mo=(+v.mo||0), ex=(+v.ex||0); // monto total para esta ventana, no se multiplica por la cantidad
   const por={}; Object.keys(P.acabados).forEach(ac=>{ const alu=v.alu.reduce((s,l)=>s+lineaAlu(l,v.linea,k).kg*precioKg(perfilDe(l.n,v.linea),ac),0); const u=alu+acc+vid; por[ac]={usd:u,pesos:u*P.dolar+mo+ex} });
   const sel=por[v.acabado]||{usd:0,pesos:0};
   return {k,kg,acc,m2,vid,mo,ex,por,usd:sel.usd,pesos:sel.pesos,mat:sel.usd*P.dolar};
