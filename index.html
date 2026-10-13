@@ -109,7 +109,7 @@ td .d{color:var(--muted);font-size:.8rem}
   <header class="brand">
     <div>
       <div class="logo">Alu<span>cast</span></div>
-      <div class="sub">Aberturas de aluminio · Presupuestador · <span title="Versión de la app">versión 12</span></div>
+      <div class="sub">Aberturas de aluminio · Presupuestador · <span title="Versión de la app">versión 13</span></div>
     </div>
     <div class="tabs" role="tablist">
       <button class="tab" role="tab" id="t-presu" aria-selected="true">Presupuesto</button>
@@ -363,7 +363,9 @@ P = load("alucast-lista-v5", structuredClone(DEF));
 if(!Array.isArray(P.vidrios)){ const base=+P.vidrio||10; P.vidrios=["3 mm","4 mm","5 mm","6 mm","Laminado","Fantasía"].map(n=>({n,usd:base})); try{localStorage.setItem("alucast-lista-v5",JSON.stringify(P))}catch(e){} }
 // Las barras miden 6,80 m (antes se usaba 3 m): se corrige una sola vez en lo guardado
 if(!P.barra68){ if(+P.barra===3) P.barra=6.8; P.barra68=true; try{localStorage.setItem("alucast-lista-v5",JSON.stringify(P))}catch(e){} }
-numero = load("alucast-num", 1);
+numero = load("alucast-num", 2345);
+// La numeración arranca en 2345 (se corrige una sola vez si venía de antes)
+if(!load("alucast-num-2345",false)){ if(numero<2345) numero=2345; save("alucast-num",numero); save("alucast-num-2345",true) }
 let PL = 0; // línea elegida en la lista de precios
 const hoy=()=>new Date().toISOString().slice(0,10);
 const L=n=>P.lineas.find(x=>x.n===n)||{n,perfiles:[],accesorios:[]};
@@ -606,6 +608,7 @@ function renderPrecios(){
   renderVidrios();
   $("p-gen").innerHTML=`<label>Dólar (media BROU)<input value="$ ${num(P.dolar)}" readonly tabindex="-1" title="Se carga arriba en la pestaña Presupuesto"></label>`+
     Object.keys(P.acabados).map(k=>`<label>Precio general ${esc(k.toLowerCase())} (U$S/kg)<input type="text" inputmode="decimal" autocomplete="off" step="0.01" data-acab="${esc(k)}" value="${P.acabados[k]}"></label>`).join("")+
+    `<label>N.º de presupuesto actual<input type="text" inputmode="numeric" autocomplete="off" data-num="1" value="${numero}"></label>`+
     `<label>Cobrar aluminio por<select data-cb="1"><option value="0"${P.cobrarBarra?"":" selected"}>Metros cargados</option><option value="1"${P.cobrarBarra?" selected":""}>Barra entera</option></select></label><label>Largo de barra (m)<input type="text" inputmode="decimal" autocomplete="off" step="0.1" min="1" data-g="barra" value="${P.barra}"></label>`;
   if(PL>=P.lineas.length) PL=0;
   const LN=P.lineas[PL];
@@ -628,6 +631,7 @@ function rename(lista,oldN,newN){ const lin=P.lineas[PL].n; [F,...items].forEach
 function precioCambio(full){ save("alucast-lista-v5",P); if(full) renderPrecios(); else calcPrecios(); renderForm(); render() }
 $("v-precios").addEventListener("input",e=>{
   const el=e.target, d=el.dataset, v=el.inputMode==="decimal"?(+el.value||0):el.value;
+  if(d.num){ const n=parseInt(el.value); if(n>0){ numero=n; save("alucast-num",numero); render() } return }
   if(d.cb){ P.cobrarBarra=el.value==="1" }
   else if(d.g){ if(d.g==="barra"&&v<1) return; P[d.g]=v }
   else if(d.acab){ P.acabados[d.acab]=v; document.querySelectorAll(`[data-pp][data-ac="${d.acab}"]`).forEach(x=>x.placeholder=v) }
