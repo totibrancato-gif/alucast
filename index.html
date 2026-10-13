@@ -109,7 +109,7 @@ td .d{color:var(--muted);font-size:.8rem}
   <header class="brand">
     <div>
       <div class="logo">Alu<span>cast</span></div>
-      <div class="sub">Aberturas de aluminio · Presupuestador · <span title="Versión de la app">versión 13</span></div>
+      <div class="sub">Aberturas de aluminio · Presupuestador · <span title="Versión de la app">versión 14</span></div>
     </div>
     <div class="tabs" role="tablist">
       <button class="tab" role="tab" id="t-presu" aria-selected="true">Presupuesto</button>
@@ -335,20 +335,249 @@ document.addEventListener("input",e=>{const el=e.target; if(el && el.inputMode==
 </script>
 <script>
 // Valores de PRESUPUESTO_ALUCAST (hojas MATERIALES y PROBBA)
+// Lista de precios de fábrica (cargada por el usuario el 12/10/2026)
 const DEF = {
-  dolar:41, vidrio:10, barra:6.8, vidrios:["3 mm","4 mm","5 mm","6 mm","Laminado","Fantasía"].map(n=>({n,usd:10})),
-  acabados:{ "Negro":12, "Gris":10.5, "Anolok":14 },
-  lineas:[
-    {n:"Probba",
-     perfiles:[ {n:"RIEL PROBBA", kgm:0.921}, {n:"LATERAL MARCO", kgm:0.554}, {n:"ENGANCHE HOJA", kgm:0.615}, {n:"LATERAL HOJA", kgm:0.62}, {n:"DIVISOR HOJA", kgm:0.6} ],
-     accesorios:[ {n:"MANIJAS", usd:4} ]},
-    {n:"Serie 25",
-     perfiles:[ {n:"MARCO SUPERIOR", kgm:0}, {n:"MARCO INFERIOR", kgm:0}, {n:"MARCO LATERAL", kgm:0}, {n:"CABEZAL", kgm:0}, {n:"ZÓCALO", kgm:0}, {n:"PARANTE LATERAL", kgm:0}, {n:"PARANTE CENTRAL", kgm:0} ],
-     accesorios:[ {n:"RUEDAS", usd:0}, {n:"CIERRE", usd:0}, {n:"FELPA (m)", usd:0} ]},
-    {n:"Mampara",
-     perfiles:[ {n:"PERFIL U", kgm:0}, {n:"GUÍA SUPERIOR", kgm:0}, {n:"GUÍA INFERIOR", kgm:0}, {n:"TIRADOR", kgm:0} ],
-     accesorios:[ {n:"RUEDAS MAMPARA", usd:0}, {n:"TOPES", usd:0} ]}
-  ]
+ "dolar": 41,
+ "vidrio": 14,
+ "barra": 6.8,
+ "acabados": {
+  "Negro": 12,
+  "Gris": 10.5,
+  "Anolok": 14
+ },
+ "lineas": [
+  {
+   "n": "Probba",
+   "perfiles": [
+    {
+     "n": "RIEL PROBBA",
+     "kgm": 0.921
+    },
+    {
+     "n": "LATERAL MARCO",
+     "kgm": 0.554
+    },
+    {
+     "n": "ENGANCHE HOJA",
+     "kgm": 0.615
+    },
+    {
+     "n": "LATERAL HOJA",
+     "kgm": 0.62
+    },
+    {
+     "n": "DIVISOR HOJA",
+     "kgm": 0.6
+    },
+    {
+     "n": "HOJA MOSQUITERO",
+     "kgm": 0.53
+    },
+    {
+     "n": "RIEL MOSQUITERO",
+     "kgm": 0.32
+    }
+   ],
+   "accesorios": [
+    {
+     "n": "MANIJAS",
+     "usd": 0.4
+    },
+    {
+     "n": "RUEDAS 40Kg",
+     "usd": 1.68
+    },
+    {
+     "n": "CIERRE LARA",
+     "usd": 1.5
+    },
+    {
+     "n": "TAPON",
+     "usd": 0.55
+    },
+    {
+     "n": "DISPOSITIVO",
+     "usd": 0.9
+    },
+    {
+     "n": "CUBRE DESAGUE",
+     "usd": 0.5
+    },
+    {
+     "n": "BURLETE",
+     "usd": 0.53
+    },
+    {
+     "n": "TEJIDO",
+     "usd": 4.5
+    },
+    {
+     "n": "RUEDAS MOSQUITERO",
+     "usd": 0.7
+    },
+    {
+     "n": "RUEDAS 80Kg",
+     "usd": 3.8
+    }
+   ]
+  },
+  {
+   "n": "Serie 20",
+   "perfiles": [
+    {
+     "n": "MARCO SUPERIOR",
+     "kgm": 0.605
+    },
+    {
+     "n": "MARCO LATERAL",
+     "kgm": 0.4
+    },
+    {
+     "n": "DIVISOR HOJA",
+     "kgm": 0.4
+    },
+    {
+     "n": "ENGANCHE",
+     "kgm": 0.473
+    },
+    {
+     "n": "LATERAL HOJA",
+     "kgm": 0.432
+    },
+    {
+     "n": "RIEL MOSQUITERO",
+     "kgm": 0.19
+    },
+    {
+     "n": "HOJA MOSQUITERO",
+     "kgm": 0.25
+    }
+   ],
+   "accesorios": [
+    {
+     "n": "RUEDAS VERDE",
+     "usd": 0.3
+    },
+    {
+     "n": "RUEDA RULEMAN",
+     "usd": 1.25
+    },
+    {
+     "n": "MANIJAS",
+     "usd": 0.4
+    },
+    {
+     "n": "CIERRE",
+     "usd": 1.5
+    },
+    {
+     "n": "BURLETE",
+     "usd": 0.53
+    },
+    {
+     "n": "CUBRE DESAGUE",
+     "usd": 0.25
+    },
+    {
+     "n": "DISPOSITIVO",
+     "usd": 0.9
+    },
+    {
+     "n": "TEJIDO",
+     "usd": 4.5
+    },
+    {
+     "n": "MANIJA MOSQUITERO",
+     "usd": 0.4
+    },
+    {
+     "n": "PATIN",
+     "usd": 0.15
+    },
+    {
+     "n": "TAPON",
+     "usd": 0.1
+    }
+   ]
+  },
+  {
+   "n": "Mampara",
+   "perfiles": [
+    {
+     "n": "PERFIL U",
+     "kgm": 0
+    },
+    {
+     "n": "GUÍA SUPERIOR",
+     "kgm": 0
+    },
+    {
+     "n": "GUÍA INFERIOR",
+     "kgm": 0
+    },
+    {
+     "n": "TIRADOR",
+     "kgm": 0
+    }
+   ],
+   "accesorios": [
+    {
+     "n": "RUEDAS MAMPARA",
+     "usd": 0
+    },
+    {
+     "n": "TOPES",
+     "usd": 0
+    }
+   ]
+  },
+  {
+   "n": "SERIE 30",
+   "perfiles": [],
+   "accesorios": []
+  },
+  {
+   "n": "GALA",
+   "perfiles": [],
+   "accesorios": []
+  },
+  {
+   "n": "GALA BATIENTE",
+   "perfiles": [],
+   "accesorios": []
+  },
+  {
+   "n": "PROBBA BATIENTE",
+   "perfiles": [],
+   "accesorios": []
+  }
+ ],
+ "vidrios": [
+  {
+   "n": "3 mm",
+   "usd": 8
+  },
+  {
+   "n": "4 mm",
+   "usd": 14
+  },
+  {
+   "n": "5 mm",
+   "usd": 19
+  },
+  {
+   "n": "6 mm",
+   "usd": 22
+  },
+  {
+   "n": "Laminado",
+   "usd": 40
+  },
+  {
+   "n": "Fantasía",
+   "usd": 23
+  }
+ ]
 };
 let P, items=[], extras=[], numero, toastT, editIdx=-1;
 let F; // ventana que se está cargando
@@ -363,6 +592,8 @@ P = load("alucast-lista-v5", structuredClone(DEF));
 if(!Array.isArray(P.vidrios)){ const base=+P.vidrio||10; P.vidrios=["3 mm","4 mm","5 mm","6 mm","Laminado","Fantasía"].map(n=>({n,usd:base})); try{localStorage.setItem("alucast-lista-v5",JSON.stringify(P))}catch(e){} }
 // Las barras miden 6,80 m (antes se usaba 3 m): se corrige una sola vez en lo guardado
 if(!P.barra68){ if(+P.barra===3) P.barra=6.8; P.barra68=true; try{localStorage.setItem("alucast-lista-v5",JSON.stringify(P))}catch(e){} }
+if(!load("alucast-precios-2026-10-12",false)){ const keep={compra:P.compra,venta:P.venta,dolar:P.dolar,dolarFecha:P.dolarFecha,cobrarBarra:P.cobrarBarra};
+  P=Object.assign(structuredClone(DEF),keep,{barra68:true}); if(P.dolar==null) P.dolar=DEF.dolar; save("alucast-lista-v5",P); save("alucast-precios-2026-10-12",true) }
 numero = load("alucast-num", 2345);
 // La numeración arranca en 2345 (se corrige una sola vez si venía de antes)
 if(!load("alucast-num-2345",false)){ if(numero<2345) numero=2345; save("alucast-num",numero); save("alucast-num-2345",true) }
