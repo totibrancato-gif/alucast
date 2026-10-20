@@ -1,0 +1,80 @@
+"use strict";
+// =========================================================================
+// Cálculo de precios (igual que la planilla, cobrando barras enteras).
+// =========================================================================
+
+/** Datos de un perfil de la línea. */
+const perfilDe = (n, lin) => L(lin).perfiles.find(p => p.n === n);
+/** Kg por metro de un perfil. */
+const kgm = (n, lin) => perfilDe(n, lin)?.kgm ?? 0;
+/** U$S por kg de un perfil en un acabado: el suyo propio o, si está vacío, el precio general. */
+function precioKg(p, acabado) {
+  const v = p?.precio?.[acabado];
+  return (v !== undefined && v !== "" && v !== null) ? +v : (P.acabados[acabado] ?? 0);
+}
+/** U$S por m² de un tipo de vidrio. */
+function precioVidrio(tipo) {
+  const g = (P.vidrios || []).find(x => x.n === tipo);
+  return g ? (+g.usd || 0) : (+P.vidrio || 0);
+}
+/** Precio en U$S de un accesorio. */
+const accUsd = (n, lin) => L(lin).accesorios.find(a => a.n === n)?.usd ?? 0;
+/** Cantidad de ventanas iguales (mínimo 1). */
+const cantV = v => Math.max(1, parseInt(v.cant) || 1);
+
+/**
+ * Una fila de aluminio. k = cantidad de ventanas.
+ * b = barras que hacen falta; mc = metros que se cobran (los cargados o, si
+ * "cobrar barra entera" está activo, las barras completas); kg = kg cobrados.
+ */
+function lineaAlu(l, lin, k = 1) {
+  const m = (+l.m || 0) * k;
+  const b = m > 0 ? Math.ceil(m / P.barra - 1e-9) : 0;
+  const mc = P.cobrarBarra ? b * P.barra : m;
+  return { b, m, mc, kg: mc * kgm(l.n, lin) };
+}
+
+/** Mano de obra y extras de una ventana, en pesos (no se multiplican por la cantidad). */
+function manoDeObra(v) {
+  const mo = numPesos(v.mo);
+  const ex = numPesos(v.ex) + (v.exs || []).reduce((s, x) => s + numPesos(x.monto), 0);
+  return { mo, ex };
+}
+
+/** Precio completo de una ventana (todas sus unidades), en cada acabado. */
+function calc(v) {
+  const k = cantV(v);
+  const kg = v.alu.reduce((s, l) => s + lineaAlu(l, v.linea, k).kg, 0);
+  const acc = v.acc.reduce((s, l) => s + (+l.q || 0) * accUsd(l.n, v.linea), 0) * k;
+  const m2 = (+v.vid.cant || 0) * (+v.vid.ancho || 0) * (+v.vid.alto || 0) * k;
+  const vid = m2 * precioVidrio(v.vid.tipo);
+  const { mo, ex } = manoDeObra(v);
+
+  const por = {};
+  Object.keys(P.acabados).forEach(a => {
+    const alu = v.alu.reduce((s, l) => s + lineaAlu(l, v.linea, k).kg * precioKg(perfilDe(l.n, v.linea), a), 0);
+    const usd = alu + acc + vid;
+    por[a] = { usd, pesos: usd * P.dolar + mo + ex };
+  });
+  const sel = por[v.acabado] || { usd: 0, pesos: 0 };
+  return { k, kg, acc, m2, vid, mo, ex, por, usd: sel.usd, pesos: sel.pesos, mat: sel.usd * P.dolar };
+}
+
+/** Totales del presupuesto: materiales (v), extras (e) y total. */
+function totals() {
+  const v = items.reduce((s, it) => s + calc(it).pesos, 0);
+  const e = extras.reduce((s, x) => s + numPesos(x.monto), 0);
+  return { v, e, total: v + e };
+}
+
+/**
+ * Precio de cada ventana para el cliente: materiales + su parte de la mano de
+ * obra (proporcional), redondeado y cuadrado para que sume justo el total.
+ */
+function preciosCliente() {
+  const t = totals(), base = items.map(it => calc(it).pesos);
+  const out = base.map(p => Math.round(t.v > 0 ? p + t.e * p / t.v : p + (items.length ? t.e / items.length : 0)));
+  const total = Math.round(t.total);
+  if (out.length) out[out.length - 1] += total - out.reduce((s, x) => s + x, 0);
+  return { out, total };
+}

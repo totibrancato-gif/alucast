@@ -1,295 +1,208 @@
 <!doctype html>
-<html lang="es"><head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#1d5a86">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Alucast">
-<link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
-<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
-<title>Presupuestos Alucast</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&family=Barlow:wght@400;500;600&display=swap">
-<style>
-/* Layout: banda de marca arriba; dos columnas (carga de ventana | presupuesto en vivo) que se apilan en celular */
-:root{
-  --bg:#eef1f4; --surface:#ffffff; --sunk:#e3e8ed; --line:#cdd5dd;
-  --fg:#17212b; --muted:#5b6977; --accent:#1d5a86; --accent-ink:#ffffff; --accent-soft:#dbe8f2;
-  --danger:#b3261e;
-  --display:"Archivo","Arial Narrow",system-ui,sans-serif;
-  --body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
-}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --bg:#11171d; --surface:#18212a; --sunk:#0d1318; --line:#2a3642;
-  --fg:#e6ecf1; --muted:#97a6b4; --accent:#6fb0de; --accent-ink:#0b1620; --accent-soft:#1b3346;
-  --danger:#ef8a83; color-scheme:dark}}
-:root[data-theme="dark"]{
-  --bg:#11171d; --surface:#18212a; --sunk:#0d1318; --line:#2a3642;
-  --fg:#e6ecf1; --muted:#97a6b4; --accent:#6fb0de; --accent-ink:#0b1620; --accent-soft:#1b3346;
-  --danger:#ef8a83; color-scheme:dark}
-*{box-sizing:border-box}
-body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.45}
-.wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:20px 48px}
-header.brand{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;padding-bottom:16px;border-bottom:2px solid var(--fg);margin-bottom:16px}
-.logo{font-family:var(--display);font-stretch:75%;font-weight:800;font-size:2.1rem;letter-spacing:.02em;line-height:1;text-transform:uppercase}
-.logo span{color:var(--accent)}
-.sub{color:var(--muted);font-size:.9rem}
-.tabs{display:flex;gap:4px;flex-wrap:wrap}
-.tab{font:600 .9rem var(--body);background:none;border:1px solid var(--line);color:var(--fg);padding:8px 14px;border-radius:4px;cursor:pointer}
-.tab[aria-selected="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
-.grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:20px;align-items:start}
-@media (max-width:860px){.grid{grid-template-columns:1fr}}
-section.panel{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:18px;min-width:0}
-h2{font-family:var(--display);font-stretch:85%;font-weight:700;font-size:1.05rem;text-transform:uppercase;letter-spacing:.06em;margin:0 0 12px}
-h3{font-family:var(--display);font-stretch:85%;font-weight:700;font-size:.9rem;text-transform:uppercase;letter-spacing:.06em;margin:0 0 8px;color:var(--muted)}
-.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
-label{display:flex;flex-direction:column;gap:4px;font-size:.78rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
-input,select{font:500 .95rem var(--body);color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:8px 10px;width:100%;min-width:0}
-input:focus,select:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
-.stack{display:flex;flex-direction:column;gap:18px}
-.preview{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;background:var(--sunk);border-radius:4px;padding:12px;margin-top:12px}
-.preview svg{width:150px;max-width:100%;height:auto;flex:0 0 auto}
-.preview .info{min-width:0;flex:1 1 260px;font-size:.88rem}
-.btn{font:600 .92rem var(--body);border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);padding:9px 16px;border-radius:4px;cursor:pointer}
-.btn.ghost{background:none;color:var(--accent)}
-.btn.warn{background:none;border-color:var(--danger);color:var(--danger)}
-.btn.sm{padding:6px 10px;font-size:.85rem}
-.actions{display:flex;gap:8px;flex-wrap:wrap}
-.tbl-wrap{overflow-x:auto}
-table{width:100%;border-collapse:collapse;font-size:.9rem}
-th{text-align:left;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;border-bottom:1px solid var(--line);padding:6px}
-td{border-bottom:1px solid var(--line);padding:7px 6px;vertical-align:top}
-td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
-td .d{color:var(--muted);font-size:.8rem}
-.mini td,.mini th{padding:4px 6px;font-size:.82rem}
-.edit td{vertical-align:middle}
-.edit input,.edit select{padding:6px 8px;font-size:.88rem}
-.edit input[type=number]{max-width:110px}
-.x{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.15rem;padding:0 4px}
-.x:hover{color:var(--danger)}
-.quote-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
-.qnum{font-family:var(--display);font-stretch:75%;font-weight:700;font-size:1.4rem;font-variant-numeric:tabular-nums}
-.totals{margin-top:14px;display:grid;gap:4px;font-variant-numeric:tabular-nums}
-.totals div{display:flex;justify-content:space-between;gap:10px}
-.totals .grand{border-top:2px solid var(--fg);margin-top:6px;padding-top:8px;font-family:var(--display);font-stretch:85%;font-weight:800;font-size:1.5rem}
-.muted{color:var(--muted)}
-.note{font-size:.82rem;color:var(--muted);margin:6px 0 0}
-.empty{color:var(--muted);text-align:center;padding:20px 8px}
-.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:4px;font-weight:600;z-index:5}
-.confirm{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--sunk);padding:10px;border-radius:4px}
-.hist-item{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid var(--line)}
-.extra-row{display:grid;grid-template-columns:minmax(0,1fr) 120px auto;gap:6px;align-items:center;margin-bottom:6px}
-.chip{display:inline-block;font-size:.72rem;font-weight:600;padding:1px 7px;border-radius:10px;background:var(--accent-soft);color:var(--fg);margin-left:4px}
-.tab .chip,.tab .badge{pointer-events:none}
-.mo-box{margin-top:16px;border:1px solid var(--accent);background:var(--accent-soft);border-radius:6px;padding:14px}
-.mo-box.falta{outline:3px solid var(--danger);outline-offset:2px}
-.badge{display:inline-block;min-width:1.5em;text-align:center;font-size:.75rem;font-weight:700;padding:1px 6px;border-radius:10px;background:var(--danger);color:var(--surface);margin-left:4px;font-variant-numeric:tabular-nums}
-.chip.late{background:var(--danger);color:var(--surface)}
-.chip.ok{background:var(--fg);color:var(--bg)}
-.acept{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;background:var(--sunk);padding:10px;border-radius:4px;margin-top:8px;flex-basis:100%}
-.acept label{flex:0 1 180px}
-.lines td{vertical-align:middle}
-.lines input,.lines select{padding:6px 8px;font-size:.9rem}
-.lines input[type=number]{max-width:96px}
-.fin{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:12px}
-.fin label.opt{flex-direction:row;align-items:center;gap:8px;text-transform:none;letter-spacing:0;font-size:.92rem;color:var(--fg);border:1px solid var(--line);border-radius:4px;padding:10px;cursor:pointer;font-variant-numeric:tabular-nums}
-.fin label.opt input{width:auto}
-.fin label.opt:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
-.fin .p{display:block;font-weight:700}
-.fin .u{display:block;font-size:.8rem;color:var(--muted)}
-</style>
-</head><body>
-
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <!-- Seguridad: solo se ejecuta el código de la propia app (nada de afuera ni insertado en la página) -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' ws://127.0.0.1:* ws://localhost:*; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="theme-color" content="#1d5a86">
+  <title>Presupuestos Alucast</title>
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Alucast">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&family=Barlow:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
 
 <div class="wrap">
   <header class="brand">
     <div>
-      <div class="logo">Alu<span>cast</span></div>
-      <div class="sub">Aberturas de aluminio · Presupuestador · <span title="Versión de la app">versión 14</span></div>
+      <h1 class="logo">Alu<span>cast</span></h1>
+      <div class="sub">Aberturas de aluminio · Presupuestador</div>
     </div>
-    <div class="tabs" role="tablist">
-      <button class="tab" role="tab" id="t-presu" aria-selected="true">Presupuesto</button>
-      <button class="tab" role="tab" id="t-hist" aria-selected="false">Guardados</button>
-      <button class="tab" role="tab" id="t-entregas" aria-selected="false">Por entregar <span class="badge" id="badge-ent" hidden></span></button>
-      <button class="tab" role="tab" id="t-precios" aria-selected="false">Lista de precios</button>
-      <button class="tab" role="tab" id="t-backup" aria-selected="false">Copia</button>
-    </div>
+    <nav class="tabs" role="tablist" aria-label="Secciones">
+      <button class="tab" role="tab" id="t-presu" aria-controls="v-presu" aria-selected="true">Presupuesto</button>
+      <button class="tab" role="tab" id="t-hist" aria-controls="v-hist" aria-selected="false" tabindex="-1">Guardados</button>
+      <button class="tab" role="tab" id="t-entregas" aria-controls="v-entregas" aria-selected="false" tabindex="-1">Por entregar <span class="badge" id="badge-ent" hidden></span></button>
+      <button class="tab" role="tab" id="t-precios" aria-controls="v-precios" aria-selected="false" tabindex="-1">Lista de precios</button>
+      <button class="tab" role="tab" id="t-backup" aria-controls="v-backup" aria-selected="false" tabindex="-1">Ajustes y copia</button>
+    </nav>
   </header>
 
-  <!-- PRESUPUESTO -->
-  <div id="v-presu" class="grid">
+  <!-- ================= PRESUPUESTO ================= -->
+  <div id="v-presu" class="grid" role="tabpanel" aria-labelledby="t-presu">
     <div class="stack">
       <section class="panel" id="dolar-box">
-        <div class="quote-head" style="margin-bottom:8px;align-items:center"><h2 style="margin:0">Dólar BROU</h2><span id="dolar-estado"></span></div>
-        <div class="fields" style="align-items:end">
-          <label>Compra<input id="d-compra" type="text" inputmode="decimal" autocomplete="off" step="0.01" min="0" inputmode="decimal"></label>
-          <label>Venta<input id="d-venta" type="text" inputmode="decimal" autocomplete="off" step="0.01" min="0" inputmode="decimal"></label>
-          <label>Media que se usa<input id="d-media" readonly tabindex="-1"></label>
-          <a class="btn ghost" href="https://www.brou.com.uy/cotizaciones" target="_blank" rel="noopener" style="text-align:center;text-decoration:none">Ver cotización en BROU</a>
+        <div class="dolar">
+          <h2>Dólar</h2>
+          <div class="dolar-ctrl" role="group" aria-label="Cotización del dólar">
+            <button class="btn ghost flecha" id="d-bajar" aria-label="Bajar el dólar 0,50">▼</button>
+            <output class="dolar-valor" id="d-valor" aria-live="polite"></output>
+            <button class="btn ghost flecha" id="d-subir" aria-label="Subir el dólar 0,50">▲</button>
+          </div>
+          <span class="note">Las flechas suben o bajan $ 0,50</span>
         </div>
       </section>
-      <section class="panel">
+
+      <section class="panel" id="cliente">
         <h2>Cliente</h2>
         <div class="fields">
-          <label>Nombre<input id="c-nombre"></label>
-          <label>Teléfono<input id="c-tel"></label>
+          <label>Nombre<input id="c-nombre" autocomplete="off"></label>
+          <label>Teléfono<input id="c-tel" inputmode="tel" autocomplete="off"></label>
           <label>Fecha<input id="c-fecha" type="date"></label>
         </div>
       </section>
 
-      <section class="panel">
+      <section class="panel" id="form-ventana">
         <h2 id="v-titulo">Nueva ventana</h2>
         <h3>Tipo de ventana</h3>
-        <div class="tabs" role="tablist" id="lineas" style="margin-bottom:10px"></div>
-        <div class="confirm" id="aviso-linea" hidden style="margin-bottom:10px"></div>
+        <div class="tabs lineas" role="group" aria-label="Tipo de ventana" id="lineas"></div>
+        <div class="confirm arriba" id="aviso-linea" hidden></div>
         <div class="fields">
-          <label>Nombre de la ventana<input id="v-nombre" placeholder="Ej: Dormitorio"></label>
-          <label>Cantidad de ventanas<input id="v-cant" type="text" inputmode="decimal" autocomplete="off" min="1" step="1" inputmode="numeric"></label>
-          <label>Ancho (m)<input id="v-ancho" type="text" inputmode="decimal" autocomplete="off" min="0" step="0.01" inputmode="decimal"></label>
-          <label>Alto (m)<input id="v-alto" type="text" inputmode="decimal" autocomplete="off" min="0" step="0.01" inputmode="decimal"></label>
+          <label>Nombre de la ventana<input id="v-nombre" placeholder="Ej: Dormitorio" autocomplete="off"></label>
+          <label>Cantidad de ventanas<input id="v-cant" type="text" inputmode="decimal" autocomplete="off"></label>
+          <label>Ancho (m)<input id="v-ancho" type="text" inputmode="decimal" autocomplete="off"></label>
+          <label>Alto (m)<input id="v-alto" type="text" inputmode="decimal" autocomplete="off"></label>
         </div>
 
-        <h3 style="margin-top:16px">Aluminio <span style="text-transform:none;letter-spacing:0;font-weight:500">· metros para una ventana</span></h3>
+        <h3>Aluminio <small>· metros para una ventana</small></h3>
         <div class="tbl-wrap">
           <table class="lines">
-            <thead><tr><th>Artículo</th><th class="n">Metros</th><th class="n" id="ab-head">Barras</th><th class="n">Kg</th><th></th></tr></thead>
+            <thead><tr><th>Artículo</th><th class="n">Metros</th><th class="n" id="ab-head">Barras</th><th class="n">Kg</th><th><span class="sr">Quitar</span></th></tr></thead>
             <tbody id="l-alu"></tbody>
           </table>
         </div>
-        <button class="btn ghost sm" id="add-alu" style="margin-top:8px">+ Agregar artículo</button>
+        <button class="btn ghost sm mas" id="add-alu">+ Agregar artículo</button>
         <p class="note" id="nota-barra"></p>
 
-        <h3 style="margin-top:16px">Accesorios <span style="text-transform:none;letter-spacing:0;font-weight:500">· para una ventana</span></h3>
+        <h3>Accesorios <small>· para una ventana</small></h3>
         <div class="tbl-wrap">
           <table class="lines">
-            <thead><tr><th>Artículo</th><th class="n">Cantidad</th><th class="n">U$S</th><th></th></tr></thead>
+            <thead><tr><th>Artículo</th><th class="n">Cantidad</th><th class="n">U$S</th><th><span class="sr">Quitar</span></th></tr></thead>
             <tbody id="l-acc"></tbody>
           </table>
         </div>
-        <button class="btn ghost sm" id="add-acc-l" style="margin-top:8px">+ Agregar accesorio</button>
+        <button class="btn ghost sm mas" id="add-acc-l">+ Agregar accesorio</button>
 
-        <h3 style="margin-top:16px">Vidrio <span style="text-transform:none;letter-spacing:0;font-weight:500">· paños de una ventana</span></h3>
+        <h3>Vidrio <small>· paños de una ventana</small></h3>
+        <p class="note intro" id="nota-vid"></p>
         <div class="fields">
           <label>Tipo de vidrio<select id="g-tipo"></select></label>
-          <label>Cantidad<input id="g-cant" type="text" inputmode="decimal" autocomplete="off" min="0" step="1"></label>
-          <label>Ancho (m)<input id="g-ancho" type="text" inputmode="decimal" autocomplete="off" min="0" step="0.01"></label>
-          <label>Alto (m)<input id="g-alto" type="text" inputmode="decimal" autocomplete="off" min="0" step="0.01"></label>
+          <label>Cantidad<input id="g-cant" type="text" inputmode="decimal" autocomplete="off"></label>
+          <label>Ancho (m)<input id="g-ancho" type="text" inputmode="decimal" autocomplete="off"></label>
+          <label>Alto (m)<input id="g-alto" type="text" inputmode="decimal" autocomplete="off"></label>
           <label>M² totales<input id="g-m2" readonly tabindex="-1"></label>
         </div>
 
         <div class="mo-box" id="mo-box">
-          <h3 style="margin:0 0 4px;color:var(--fg)">Mano de obra y extras de esta ventana</h3>
-          <p class="note" style="margin:0 0 10px">En pesos, el total para esta ventana (no se multiplica por la cantidad). Van incluidos en su precio; el cliente no los ve por separado.</p>
-          <label style="max-width:220px">Mano de obra ($)<input id="v-mo" type="text" inputmode="decimal" autocomplete="off" placeholder="0"></label>
-          <div style="margin-top:10px;font-size:.78rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Extras</div>
-          <div id="v-exs" style="margin-top:4px"></div>
+          <h3>Mano de obra y extras de esta ventana</h3>
+          <p class="note intro">En pesos, el total para esta ventana (no se multiplica por la cantidad). Van incluidos en su precio; el cliente no los ve por separado.</p>
+          <label class="mo-campo">Mano de obra ($)<input id="v-mo" data-pesos type="text" inputmode="decimal" autocomplete="off" placeholder="0"></label>
+          <div class="mo-titulo">Extras</div>
+          <div id="v-exs"></div>
           <button class="btn ghost sm" id="add-ex">+ Agregar extra</button>
         </div>
 
-        <h3 style="margin-top:18px">Precio de la ventana · elegí el acabado</h3>
-        <div class="fin" id="fin"></div>
+        <h3>Precio de la ventana · elegí el acabado</h3>
+        <div class="fin" id="fin" role="radiogroup" aria-label="Acabado"></div>
+        <p class="sr" id="fin-vivo" aria-live="polite"></p>
 
-        <div class="confirm" id="conf-mo" hidden style="margin-top:12px">
-          <span>Esta ventana no tiene mano de obra ni extras. ¿La guardás igual?</span>
-          <button class="btn sm" id="conf-mo-cargar">Cargar mano de obra</button>
-          <button class="btn ghost sm" id="conf-mo-si">Guardar sin mano de obra</button>
-        </div>
-        <div class="actions" style="margin-top:14px">
+        <div class="actions">
           <button class="btn" id="btn-add">Agregar al presupuesto</button>
           <button class="btn ghost" id="btn-cancel" hidden>Cancelar edición</button>
+        </div>
+        <p class="error" id="form-error" role="alert" hidden></p>
+        <div class="confirm" id="conf-mo" role="alertdialog" aria-labelledby="conf-mo-txt" hidden>
+          <span id="conf-mo-txt">Esta ventana no tiene mano de obra ni extras. ¿La guardás igual?</span>
+          <button class="btn sm" id="conf-mo-cargar">Cargar mano de obra</button>
+          <button class="btn ghost sm" id="conf-mo-si">Guardar sin mano de obra</button>
         </div>
       </section>
     </div>
 
-    <div class="stack">
-    <section class="panel">
-      <div class="quote-head">
-        <div><h2 style="margin:0">Presupuesto</h2><div class="qnum" id="q-num"></div></div>
-        <div class="muted" style="text-align:right"><div id="q-fecha"></div><div id="q-cli"></div></div>
-      </div>
-      <div class="tbl-wrap">
-        <table>
-          <thead><tr><th>#</th><th>Ventana</th><th class="n">Precio</th><th></th></tr></thead>
-          <tbody id="items"></tbody>
-        </table>
-      </div>
-      <div class="totals" id="totales"></div>
-      <div class="actions" style="margin-top:16px">
-        <button class="btn" id="btn-guardar">Guardar</button>
-        <button class="btn ghost" id="btn-copiar">Copiar para WhatsApp</button>
-        <button class="btn warn" id="btn-nuevo">Borrar / Nuevo presupuesto</button>
-      </div>
-      <div class="confirm" id="conf-nuevo" hidden style="margin-top:10px">
-        <span>¿Borrar los datos de este presupuesto y empezar uno nuevo? La lista de precios no se toca.</span>
-        <button class="btn warn" id="conf-si">Sí, borrar</button>
-        <button class="btn ghost" id="conf-no">Cancelar</button>
-      </div>
-      <textarea id="copia" hidden readonly style="width:100%;height:170px;margin-top:10px"></textarea>
-    </section>
+    <div class="stack columna-presupuesto">
+      <section class="panel">
+        <div class="quote-head">
+          <div><h2 id="q-h" tabindex="-1">Presupuesto</h2><div class="qnum" id="q-num"></div></div>
+          <div class="muted der"><div id="q-fecha"></div><div id="q-cli"></div></div>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Ventana</th><th class="n">Precio</th><th><span class="sr">Acciones</span></th></tr></thead>
+            <tbody id="items"></tbody>
+          </table>
+        </div>
+        <div class="totals" id="totales"></div>
+        <div class="actions">
+          <button class="btn" id="btn-guardar">Guardar</button>
+          <button class="btn" id="btn-pdf">Descargar PDF</button>
+          <button class="btn ghost" id="btn-copiar">Copiar para WhatsApp</button>
+          <button class="btn warn quieto" id="btn-nuevo">Borrar / Nuevo</button>
+        </div>
+        <div class="confirm" id="conf-nuevo" role="alertdialog" aria-labelledby="conf-nuevo-txt" hidden>
+          <span id="conf-nuevo-txt"></span>
+          <button class="btn warn" id="conf-si">Sí, borrar</button>
+          <button class="btn ghost" id="conf-no">Cancelar</button>
+        </div>
+        <textarea id="copia" hidden readonly aria-label="Texto para WhatsApp"></textarea>
+      </section>
 
-    <section class="panel" style="background:var(--sunk)">
-      <h2>Resumen interno</h2>
-      <p class="note" style="margin:0 0 10px">Solo lo ves vos. La mano de obra y los extras se cargan en cada ventana y van incluidos en su precio; el cliente no los ve por separado.</p>
-      <div id="extras-viejos" hidden>
-        <p class="note" style="margin:0 0 6px">Extras generales de este presupuesto (de la versión anterior):</p>
-        <div id="extras"></div>
-        <button class="btn ghost sm" id="btn-extra" hidden>+ Agregar concepto</button>
-      </div>
-      <div class="totals" id="interno"></div>
-    </section>
+      <section class="panel interno">
+        <h2>Resumen interno</h2>
+        <p class="note intro">Solo lo ves vos. La mano de obra y los extras se cargan en cada ventana y van incluidos en su precio; el cliente no los ve por separado.</p>
+        <div id="extras-viejos" hidden>
+          <p class="note intro">Extras generales de este presupuesto (de la versión anterior):</p>
+          <div id="extras"></div>
+        </div>
+        <div class="totals" id="interno"></div>
+      </section>
     </div>
   </div>
 
-  <!-- GUARDADOS -->
-  <section id="v-hist" class="panel" hidden>
+  <!-- ================= GUARDADOS ================= -->
+  <section id="v-hist" class="panel" role="tabpanel" aria-labelledby="t-hist" hidden>
     <h2>Presupuestos guardados</h2>
-    <p class="note" style="margin:0 0 6px">Cuando el cliente acepte, tocá "Aceptado", poné la fecha de entrega y el trabajo pasa a "Por entregar".</p>
+    <p class="note intro">Cuando el cliente acepte, tocá "Aceptado", poné la fecha de entrega y el trabajo pasa a "Por entregar".</p>
     <div id="hist"></div>
   </section>
 
-  <section id="v-backup" class="panel" hidden>
-    <h2>Copia de seguridad</h2>
-    <p class="note" style="margin:0 0 10px">Cada dispositivo guarda sus propios datos. Para pasar tus presupuestos y precios a otro dispositivo, exportá la copia acá y abrila en el otro con "Importar copia".</p>
-    <div class="actions">
-      <button class="btn" id="bk-exp">Exportar copia</button>
-      <label class="btn ghost" style="flex-direction:row;text-transform:none;letter-spacing:0;font-size:.92rem;color:var(--accent);cursor:pointer">Importar copia<input type="file" id="bk-imp" accept=".json,application/json" hidden></label>
-    </div>
-    <div class="confirm" id="bk-conf" hidden style="margin-top:10px"><span id="bk-txt"></span><button class="btn warn sm" id="bk-si">Sí, reemplazar</button><button class="btn ghost sm" id="bk-no">Cancelar</button></div>
-  </section>
-
-  <!-- POR ENTREGAR -->
-  <div id="v-entregas" class="stack" hidden>
+  <!-- ================= POR ENTREGAR ================= -->
+  <div id="v-entregas" class="stack" role="tabpanel" aria-labelledby="t-entregas" hidden>
     <section class="panel">
-      <div class="quote-head" style="align-items:flex-end"><h2 style="margin:0">Por entregar</h2>
-        <label style="min-width:190px">Mes de entrega<select id="mes-ent"></select></label></div>
+      <div class="quote-head abajo"><h2>Por entregar</h2>
+        <label>Mes de entrega<select id="mes-ent"></select></label></div>
       <div id="ent"></div>
     </section>
     <section class="panel">
-      <div class="quote-head" style="align-items:flex-end"><h2 style="margin:0">Entregados</h2>
-        <label style="min-width:190px">Mes en que se entregó<select id="mes-ok"></select></label></div>
+      <div class="quote-head abajo"><h2>Entregados</h2>
+        <label>Mes en que se entregó<select id="mes-ok"></select></label></div>
       <div id="ent-ok"></div>
     </section>
   </div>
 
-  <!-- LISTA DE PRECIOS -->
-  <div id="v-precios" class="stack" hidden>
+  <!-- ================= LISTA DE PRECIOS ================= -->
+  <div id="v-precios" class="stack" role="tabpanel" aria-labelledby="t-precios" hidden>
     <section class="panel">
       <h2>Parámetros</h2>
       <div class="fields" id="p-gen"></div>
     </section>
     <section class="panel">
       <h2>Tipos de ventana</h2>
-      <div class="tabs" role="tablist" id="p-lineas"></div>
-      <div class="actions" style="margin-top:12px;align-items:flex-end">
-        <label style="flex:1 1 220px;max-width:320px">Nombre del tipo<input id="p-lnombre"></label>
+      <div class="tabs" role="group" aria-label="Tipo de ventana a editar" id="p-lineas"></div>
+      <div class="actions base">
+        <label class="p-nombre">Nombre del tipo<input id="p-lnombre" autocomplete="off"></label>
+        <label class="p-desc">Descuento vidrio ancho (m)<input id="p-desca" data-desc="descA" type="text" inputmode="decimal" autocomplete="off" placeholder="0"></label>
+        <label class="p-desc">Descuento vidrio alto (m)<input id="p-desch" data-desc="descH" type="text" inputmode="decimal" autocomplete="off" placeholder="0"></label>
         <button class="btn warn sm" id="p-ldel">Borrar este tipo</button>
       </div>
-      <div class="confirm" id="p-ldel-conf" hidden style="margin-top:10px">
-        <span>¿Borrar este tipo de ventana con todos sus perfiles y accesorios?</span>
+      <div class="confirm" id="p-ldel-conf" role="alertdialog" aria-labelledby="p-ldel-txt" hidden>
+        <span id="p-ldel-txt">¿Borrar este tipo de ventana con todos sus perfiles y accesorios?</span>
         <button class="btn warn sm" id="p-ldel-si">Sí, borrar</button>
         <button class="btn ghost sm" id="p-ldel-no">Cancelar</button>
       </div>
@@ -302,679 +215,76 @@ td .d{color:var(--muted);font-size:.8rem}
           <tbody id="p-perf"></tbody>
         </table>
       </div>
-      <p class="note">Podés cambiar los kg por metro (o los kg de la barra entera, se calculan uno del otro) y el precio por kg de cada artículo en cada acabado. Si dejás vacío un precio, usa el precio general del acabado (en Parámetros, arriba). Debajo de cada precio ves cuánto sale el metro.</p>
-      <button class="btn ghost sm" id="add-perf" style="margin-top:10px">+ Agregar perfil</button>
+      <p class="note">Podés cambiar los kg por metro (o los kg de la barra entera: se calculan uno del otro) y el precio por kg de cada artículo en cada acabado. Si dejás vacío un precio, usa el precio general del acabado (en Parámetros, arriba). Debajo de cada precio ves cuánto sale el metro.</p>
+      <button class="btn ghost sm mas" id="add-perf">+ Agregar perfil</button>
     </section>
     <section class="panel">
       <h2>Accesorios · <span id="p-lt2"></span></h2>
       <div class="tbl-wrap">
         <table class="edit">
-          <thead><tr><th>Artículo</th><th class="n">Precio U$S / unidad</th><th></th></tr></thead>
+          <thead><tr><th>Artículo</th><th class="n">Precio U$S / unidad</th><th><span class="sr">Quitar</span></th></tr></thead>
           <tbody id="p-acc"></tbody>
         </table>
       </div>
-      <button class="btn ghost sm" id="add-acc" style="margin-top:10px">+ Agregar accesorio</button>
+      <button class="btn ghost sm mas" id="add-acc">+ Agregar accesorio</button>
     </section>
     <section class="panel">
       <h2>Vidrios</h2>
       <div class="tbl-wrap">
         <table class="edit">
-          <thead><tr><th>Tipo de vidrio</th><th class="n">Precio U$S / m²</th><th></th></tr></thead>
+          <thead><tr><th>Tipo de vidrio</th><th class="n">Precio U$S / m²</th><th><span class="sr">Quitar</span></th></tr></thead>
           <tbody id="p-vid"></tbody>
         </table>
       </div>
-      <button class="btn ghost sm" id="add-vid" style="margin-top:10px">+ Agregar vidrio</button>
+      <button class="btn ghost sm mas" id="add-vid">+ Agregar vidrio</button>
     </section>
-    <div class="actions"><button class="btn ghost" id="btn-reset-precios">Volver a los precios de la planilla</button></div>
+    <div class="actions arriba"><button class="btn ghost" id="btn-reset-precios">Volver a los precios de la planilla</button></div>
+  </div>
+
+  <!-- ================= AJUSTES Y COPIA ================= -->
+  <div id="v-backup" class="stack" role="tabpanel" aria-labelledby="t-backup" hidden>
+    <section class="panel">
+      <h2>Tus datos en el PDF</h2>
+      <p class="note intro">Esto aparece en el PDF del presupuesto que le mandás al cliente. Lo que dejes vacío no se muestra.</p>
+      <div class="fields anchos" id="empresa">
+        <label>Nombre del negocio<input data-emp="nombre" autocomplete="organization"></label>
+        <label>Teléfono / WhatsApp<input data-emp="tel" inputmode="tel" autocomplete="tel"></label>
+        <label>Dirección o ciudad<input data-emp="dir" autocomplete="street-address"></label>
+        <label>Email o RUT<input data-emp="extra" autocomplete="email"></label>
+        <label>Validez del presupuesto (días)<input data-emp="validez" type="text" inputmode="decimal" autocomplete="off"></label>
+        <label class="ancho-total">Condiciones y notas<textarea data-emp="condiciones" placeholder="Ej: Forma de pago, plazo de entrega, qué incluye…"></textarea></label>
+      </div>
+    </section>
+    <section class="panel">
+      <h2>Copia de seguridad</h2>
+      <p class="note intro">Para pasar tus presupuestos y precios a otra compu, exportá la copia acá y abrila en la otra con "Importar copia".</p>
+      <div class="actions arriba">
+        <button class="btn" id="bk-exp">Exportar copia</button>
+        <button class="btn ghost" id="bk-imp-btn">Importar copia</button>
+        <input type="file" id="bk-imp" accept=".json,application/json" hidden>
+      </div>
+      <div class="confirm" id="bk-conf" role="alertdialog" aria-labelledby="bk-txt" hidden><span id="bk-txt"></span><button class="btn warn sm" id="bk-si">Sí, reemplazar</button><button class="btn ghost sm" id="bk-no">Cancelar</button></div>
+    </section>
   </div>
 </div>
-<div class="toast" id="toast" hidden></div>
 
-<script>
-document.addEventListener("input",e=>{const el=e.target; if(el && el.inputMode==="decimal" && el.value.includes(",")){ const pos=el.selectionStart; el.value=el.value.replace(/,/g,"."); try{el.setSelectionRange(pos,pos)}catch(_){} }},true);
-</script>
-<script>
-// Valores de PRESUPUESTO_ALUCAST (hojas MATERIALES y PROBBA)
-// Lista de precios de fábrica (cargada por el usuario el 12/10/2026)
-const DEF = {
- "dolar": 41,
- "vidrio": 14,
- "barra": 6.8,
- "acabados": {
-  "Negro": 12,
-  "Gris": 10.5,
-  "Anolok": 14
- },
- "lineas": [
-  {
-   "n": "Probba",
-   "perfiles": [
-    {
-     "n": "RIEL PROBBA",
-     "kgm": 0.921
-    },
-    {
-     "n": "LATERAL MARCO",
-     "kgm": 0.554
-    },
-    {
-     "n": "ENGANCHE HOJA",
-     "kgm": 0.615
-    },
-    {
-     "n": "LATERAL HOJA",
-     "kgm": 0.62
-    },
-    {
-     "n": "DIVISOR HOJA",
-     "kgm": 0.6
-    },
-    {
-     "n": "HOJA MOSQUITERO",
-     "kgm": 0.53
-    },
-    {
-     "n": "RIEL MOSQUITERO",
-     "kgm": 0.32
-    }
-   ],
-   "accesorios": [
-    {
-     "n": "MANIJAS",
-     "usd": 0.4
-    },
-    {
-     "n": "RUEDAS 40Kg",
-     "usd": 1.68
-    },
-    {
-     "n": "CIERRE LARA",
-     "usd": 1.5
-    },
-    {
-     "n": "TAPON",
-     "usd": 0.55
-    },
-    {
-     "n": "DISPOSITIVO",
-     "usd": 0.9
-    },
-    {
-     "n": "CUBRE DESAGUE",
-     "usd": 0.5
-    },
-    {
-     "n": "BURLETE",
-     "usd": 0.53
-    },
-    {
-     "n": "TEJIDO",
-     "usd": 4.5
-    },
-    {
-     "n": "RUEDAS MOSQUITERO",
-     "usd": 0.7
-    },
-    {
-     "n": "RUEDAS 80Kg",
-     "usd": 3.8
-    }
-   ]
-  },
-  {
-   "n": "Serie 20",
-   "perfiles": [
-    {
-     "n": "MARCO SUPERIOR",
-     "kgm": 0.605
-    },
-    {
-     "n": "MARCO LATERAL",
-     "kgm": 0.4
-    },
-    {
-     "n": "DIVISOR HOJA",
-     "kgm": 0.4
-    },
-    {
-     "n": "ENGANCHE",
-     "kgm": 0.473
-    },
-    {
-     "n": "LATERAL HOJA",
-     "kgm": 0.432
-    },
-    {
-     "n": "RIEL MOSQUITERO",
-     "kgm": 0.19
-    },
-    {
-     "n": "HOJA MOSQUITERO",
-     "kgm": 0.25
-    }
-   ],
-   "accesorios": [
-    {
-     "n": "RUEDAS VERDE",
-     "usd": 0.3
-    },
-    {
-     "n": "RUEDA RULEMAN",
-     "usd": 1.25
-    },
-    {
-     "n": "MANIJAS",
-     "usd": 0.4
-    },
-    {
-     "n": "CIERRE",
-     "usd": 1.5
-    },
-    {
-     "n": "BURLETE",
-     "usd": 0.53
-    },
-    {
-     "n": "CUBRE DESAGUE",
-     "usd": 0.25
-    },
-    {
-     "n": "DISPOSITIVO",
-     "usd": 0.9
-    },
-    {
-     "n": "TEJIDO",
-     "usd": 4.5
-    },
-    {
-     "n": "MANIJA MOSQUITERO",
-     "usd": 0.4
-    },
-    {
-     "n": "PATIN",
-     "usd": 0.15
-    },
-    {
-     "n": "TAPON",
-     "usd": 0.1
-    }
-   ]
-  },
-  {
-   "n": "Mampara",
-   "perfiles": [
-    {
-     "n": "PERFIL U",
-     "kgm": 0
-    },
-    {
-     "n": "GUÍA SUPERIOR",
-     "kgm": 0
-    },
-    {
-     "n": "GUÍA INFERIOR",
-     "kgm": 0
-    },
-    {
-     "n": "TIRADOR",
-     "kgm": 0
-    }
-   ],
-   "accesorios": [
-    {
-     "n": "RUEDAS MAMPARA",
-     "usd": 0
-    },
-    {
-     "n": "TOPES",
-     "usd": 0
-    }
-   ]
-  },
-  {
-   "n": "SERIE 30",
-   "perfiles": [],
-   "accesorios": []
-  },
-  {
-   "n": "GALA",
-   "perfiles": [],
-   "accesorios": []
-  },
-  {
-   "n": "GALA BATIENTE",
-   "perfiles": [],
-   "accesorios": []
-  },
-  {
-   "n": "PROBBA BATIENTE",
-   "perfiles": [],
-   "accesorios": []
-  }
- ],
- "vidrios": [
-  {
-   "n": "3 mm",
-   "usd": 8
-  },
-  {
-   "n": "4 mm",
-   "usd": 14
-  },
-  {
-   "n": "5 mm",
-   "usd": 19
-  },
-  {
-   "n": "6 mm",
-   "usd": 22
-  },
-  {
-   "n": "Laminado",
-   "usd": 40
-  },
-  {
-   "n": "Fantasía",
-   "usd": 23
-  }
- ]
-};
-let P, items=[], extras=[], numero, toastT, editIdx=-1;
-let F; // ventana que se está cargando
-const $=id=>document.getElementById(id);
-const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const pes=n=>"$ "+Math.round(n).toLocaleString("es-UY");
-const num=(n,d=2)=>(+n||0).toLocaleString("es-UY",{minimumFractionDigits:d,maximumFractionDigits:d});
-function load(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}}
-function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
-P = load("alucast-lista-v5", structuredClone(DEF));
-// Tipos de vidrio con su precio por m² (se crean una vez con el precio de vidrio que había)
-if(!Array.isArray(P.vidrios)){ const base=+P.vidrio||10; P.vidrios=["3 mm","4 mm","5 mm","6 mm","Laminado","Fantasía"].map(n=>({n,usd:base})); try{localStorage.setItem("alucast-lista-v5",JSON.stringify(P))}catch(e){} }
-// Las barras miden 6,80 m (antes se usaba 3 m): se corrige una sola vez en lo guardado
-if(!P.barra68){ if(+P.barra===3) P.barra=6.8; P.barra68=true; try{localStorage.setItem("alucast-lista-v5",JSON.stringify(P))}catch(e){} }
-if(!load("alucast-precios-2026-10-12",false)){ const keep={compra:P.compra,venta:P.venta,dolar:P.dolar,dolarFecha:P.dolarFecha,cobrarBarra:P.cobrarBarra};
-  P=Object.assign(structuredClone(DEF),keep,{barra68:true}); if(P.dolar==null) P.dolar=DEF.dolar; save("alucast-lista-v5",P); save("alucast-precios-2026-10-12",true) }
-numero = load("alucast-num", 2345);
-// La numeración arranca en 2345 (se corrige una sola vez si venía de antes)
-if(!load("alucast-num-2345",false)){ if(numero<2345) numero=2345; save("alucast-num",numero); save("alucast-num-2345",true) }
-let PL = 0; // línea elegida en la lista de precios
-const hoy=()=>new Date().toISOString().slice(0,10);
-const L=n=>P.lineas.find(x=>x.n===n)||{n,perfiles:[],accesorios:[]};
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-function blank(linea){
-  const l=L(linea||P.lineas[0]?.n);
-  return {linea:l.n, nombre:"", cant:"1", ancho:"", alto:"", acabado:Object.keys(P.acabados)[0], alu:l.perfiles.map(p=>({n:p.n,m:""})), acc:l.accesorios.map(a=>({n:a.n,q:""})), vid:{cant:"",ancho:"",alto:"",tipo:(P.vidrios&&P.vidrios.find(g=>g.n==="4 mm")||P.vidrios?.[0]||{}).n||""}, mo:"", ex:"", exs:[]};
-}
+<!-- Hoja que se imprime / guarda como PDF (se arma en js/pdf.js) -->
+<div id="hoja" class="hoja"></div>
 
-// ---- cálculo (igual que la planilla, con barras enteras) ----
-const kgm=(n,lin)=>L(lin).perfiles.find(p=>p.n===n)?.kgm??0;
-const perfilDe=(n,lin)=>L(lin).perfiles.find(p=>p.n===n);
-function precioKg(p,k){ const v=p?.precio?.[k]; return (v!==undefined&&v!==""&&v!==null)? +v : (P.acabados[k]??0) }
-function precioVidrio(t){ const x=(P.vidrios||[]).find(g=>g.n===t); return x? (+x.usd||0) : (+P.vidrio||0) }
-const accUsd=(n,lin)=>L(lin).accesorios.find(a=>a.n===n)?.usd??0;
-const cantV=v=>Math.max(1,parseInt(v.cant)||1);
-// kg según los metros cargados; si "cobrar barra entera" está activo, según las barras completas
-function lineaAlu(l,lin,k=1){ const m=(+l.m||0)*k, b=m>0?Math.ceil(m/P.barra-1e-9):0; const mc=P.cobrarBarra? b*P.barra : m; return {b, m, mc, kg:mc*kgm(l.n,lin)} }
-function calc(v){
-  const k=cantV(v);
-  const kg=v.alu.reduce((s,l)=>s+lineaAlu(l,v.linea,k).kg,0);
-  const acc=v.acc.reduce((s,l)=>s+(+l.q||0)*accUsd(l.n,v.linea),0)*k;
-  const m2=(+v.vid.cant||0)*(+v.vid.ancho||0)*(+v.vid.alto||0)*k, vid=m2*precioVidrio(v.vid.tipo);
-  const mo=(+v.mo||0), ex=(+v.ex||0)+(v.exs||[]).reduce((s,x)=>s+(+x.monto||0),0); // total para esta ventana, no se multiplica por la cantidad
-  const por={}; Object.keys(P.acabados).forEach(ac=>{ const alu=v.alu.reduce((s,l)=>s+lineaAlu(l,v.linea,k).kg*precioKg(perfilDe(l.n,v.linea),ac),0); const u=alu+acc+vid; por[ac]={usd:u,pesos:u*P.dolar+mo+ex} });
-  const sel=por[v.acabado]||{usd:0,pesos:0};
-  return {k,kg,acc,m2,vid,mo,ex,por,usd:sel.usd,pesos:sel.pesos,mat:sel.usd*P.dolar};
-}
-
-// ---- formulario de ventana ----
-function optPerf(sel){ return L(F.linea).perfiles.map(p=>`<option${p.n===sel?" selected":""}>${esc(p.n)}</option>`).join("") }
-function optAcc(sel){ return L(F.linea).accesorios.map(a=>`<option${a.n===sel?" selected":""}>${esc(a.n)}</option>`).join("") }
-function faltanKg(lin){ return L(lin).perfiles.some(p=>!p.kgm) }
-function renderLineas(){
-  $("lineas").innerHTML=P.lineas.map(l=>`<button class="tab" role="tab" data-lin="${esc(l.n)}" aria-selected="${l.n===F.linea}">${esc(l.n)}</button>`).join("");
-  const w=$("aviso-linea"); w.hidden=!faltanKg(F.linea);
-  w.innerHTML=`Faltan los kg por metro de algunos perfiles de <b>${esc(F.linea)}</b>. Completalos en <button class="btn ghost sm" data-goto="${esc(F.linea)}">Lista de precios</button>`;
-}
-function renderExs(){
-  if(!F.exs) F.exs=[];
-  if(+F.ex && !F.exs.length){ F.exs.push({c:"Extras",monto:F.ex}); F.ex="" }
-  $("v-exs").innerHTML=F.exs.map((x,i)=>`<div class="extra-row"><input data-vx="${i}" data-f="c" value="${esc(x.c)}" placeholder="Concepto (ej: flete, colocación)"><input data-vx="${i}" data-f="monto" type="text" inputmode="decimal" autocomplete="off" value="${esc(x.monto)}" placeholder="$"><button class="x" data-vxdel="${i}" aria-label="Quitar">×</button></div>`).join("");
-}
-function renderForm(){
-  renderLineas();
-  $("v-nombre").value=F.nombre; $("v-mo").value=F.mo??""; renderExs(); $("v-cant").value=F.cant??"1"; $("v-ancho").value=F.ancho??""; $("v-alto").value=F.alto??"";
-  $("l-alu").innerHTML=F.alu.map((l,i)=>`<tr><td><select data-al="${i}" data-f="n">${optPerf(l.n)}</select></td><td class="n"><input type="text" inputmode="decimal" autocomplete="off" min="0" step="0.01" inputmode="decimal" data-al="${i}" data-f="m" value="${l.m}" placeholder="0"></td><td class="n" id="ab-${i}"></td><td class="n" id="ak-${i}"></td><td><button class="x" data-aldel="${i}" aria-label="Quitar">×</button></td></tr>`).join("");
-  $("l-acc").innerHTML=F.acc.map((l,i)=>`<tr><td><select data-ac="${i}" data-f="n">${optAcc(l.n)}</select></td><td class="n"><input type="text" inputmode="decimal" autocomplete="off" min="0" step="1" data-ac="${i}" data-f="q" value="${l.q}" placeholder="0"></td><td class="n" id="cu-${i}"></td><td><button class="x" data-acdel="${i}" aria-label="Quitar">×</button></td></tr>`).join("");
-  $("g-cant").value=F.vid.cant; $("g-ancho").value=F.vid.ancho; $("g-alto").value=F.vid.alto;
-  $("nota-barra").textContent= P.cobrarBarra ? `Se cobran barras enteras de ${num(P.barra,2)} m (se cambia en Lista de precios → Parámetros).` : `Los kg se calculan con los metros que ponés. "Barras" te muestra cuántas barras de ${num(P.barra,2)} m vas a necesitar.`;
-  $("v-titulo").textContent = editIdx>=0 ? `Editando ventana ${editIdx+1}` : "Nueva ventana";
-  $("btn-add").textContent = editIdx>=0 ? "Guardar cambios" : "Guardar ventana en el presupuesto";
-  $("btn-cancel").hidden = editIdx<0;
-  updateForm();
-}
-function updateForm(){
-  const kq=cantV(F);
-  F.alu.forEach((l,i)=>{const r=lineaAlu(l,F.linea,kq); $("ab-"+i).textContent=r.b?`${r.b} (${num(r.b*P.barra,2)} m)`:"–"; $("ak-"+i).textContent=r.kg?num(r.kg,3):"–"});
-  F.acc.forEach((l,i)=>{const u=(+l.q||0)*accUsd(l.n,F.linea); $("cu-"+i).textContent=u?num(u):"–"});
-  const c=calc(F);
-  $("g-m2").value=num(c.m2);
-  const gt=$("g-tipo"); if(gt){ const opts=(P.vidrios||[]).map(g=>`<option${g.n===F.vid.tipo?" selected":""}>${esc(g.n)}</option>`).join(""); if(gt.dataset.o!==opts){ gt.innerHTML=opts; gt.dataset.o=opts } if(F.vid.tipo && gt.value!==F.vid.tipo) gt.value=F.vid.tipo; if(!F.vid.tipo && gt.value){ F.vid.tipo=gt.value } }
-  $("fin").innerHTML=Object.keys(P.acabados).map(k=>`<label class="opt"><input type="radio" name="acabado" value="${esc(k)}"${F.acabado===k?" checked":""}><span><span class="u">${c.k>1?c.k+" ventanas":"Ventana"} en ${esc(k.toLowerCase())}</span><span class="p">${pes(c.por[k].pesos)}</span><span class="u">U$S ${num(c.por[k].usd)}${c.k>1?` · ${pes(c.por[k].pesos/c.k)} c/u`:""}</span></span></label>`).join("")+
-    `<div class="muted" style="font-size:.82rem;align-self:center">${c.k>1?`Total de ${c.k} ventanas. `:""}Aluminio ${num(c.kg,3)} kg · Accesorios U$S ${num(c.acc)} · Vidrio U$S ${num(c.vid)}${(c.mo||c.ex)?` · Mano de obra ${pes(c.mo)} · Extras ${pes(c.ex)} (incluidos)`:""}</div>`;
-  $("ab-head").textContent = kq>1 ? `Barras (${kq} vent.)` : "Barras";
-  saveDraft();
-}
-$("v-presu").addEventListener("input",e=>{
-  const el=e.target, d=el.dataset;
-  if(d.al!==undefined){ F.alu[+d.al][d.f]=el.value; updateForm(); return }
-  if(d.ac!==undefined){ F.acc[+d.ac][d.f]=el.value; updateForm(); return }
-  if(el.id==="v-nombre"){ F.nombre=el.value; saveDraft(); return }
-  if(el.id==="v-mo"){ F.mo=el.value; $("mo-box").classList.remove("falta"); $("conf-mo").hidden=true; updateForm(); return }
-  if(d.vx!==undefined){ F.exs[+d.vx][d.f]=el.value; $("mo-box").classList.remove("falta"); $("conf-mo").hidden=true; updateForm(); return }
-  if(el.id==="v-cant"){ F.cant=el.value; updateForm(); return }
-  if(el.id==="v-ancho"||el.id==="v-alto"){ const k=el.id.slice(2), prev=F[k]??"";
-    if(F.vid[k]===""||F.vid[k]===prev){ F.vid[k]=el.value; $("g-"+k).value=el.value; if(F.vid.cant==="") { F.vid.cant="1"; $("g-cant").value="1" } }
-    F[k]=el.value; updateForm(); return }
-  if(el.id==="g-tipo"){ F.vid.tipo=el.value; updateForm(); return }
-  if(el.id.startsWith("g-")){ F.vid[el.id.slice(2)]=el.value; updateForm(); return }
-  if(el.name==="acabado"){ F.acabado=el.value; updateForm(); return }
-  if(d.ex!==undefined){ extras[+d.ex][d.f]=el.value; render(); return }
-  if(el.id.startsWith("c-")) render();
-});
-$("v-presu").addEventListener("change",e=>{ if(e.target.name==="acabado"){F.acabado=e.target.value;updateForm()} });
-$("l-alu").addEventListener("click",e=>{const i=e.target.dataset.aldel; if(i!==undefined){F.alu.splice(+i,1);renderForm()}});
-$("l-acc").addEventListener("click",e=>{const i=e.target.dataset.acdel; if(i!==undefined){F.acc.splice(+i,1);renderForm()}});
-$("add-alu").onclick=()=>{ const p=L(F.linea).perfiles; if(!p.length){toast("Agregá perfiles en la lista de precios");return} F.alu.push({n:p[0].n,m:""}); renderForm() };
-$("add-acc-l").onclick=()=>{ const a=L(F.linea).accesorios; if(!a.length){toast("Agregá accesorios en la lista de precios");return} F.acc.push({n:a[0].n,q:""}); renderForm() };
-$("lineas").onclick=e=>{const n=e.target.dataset.lin; if(n===undefined||n===F.linea) return;
-  const nuevo=blank(n); nuevo.nombre=F.nombre; nuevo.acabado=F.acabado; nuevo.vid=F.vid; F=nuevo; renderForm()};
-$("aviso-linea").onclick=e=>{const n=e.target.dataset.goto; if(n===undefined) return; PL=Math.max(0,P.lineas.findIndex(l=>l.n===n)); show("precios")};
-let sinMoOk=false;
-$("conf-mo-cargar").onclick=()=>{ $("conf-mo").hidden=true; $("mo-box").scrollIntoView({behavior:"smooth",block:"center"}); $("v-mo").focus({preventScroll:true}) };
-$("conf-mo-si").onclick=()=>{ sinMoOk=true; $("conf-mo").hidden=true; $("btn-add").click() };
-$("btn-add").onclick=()=>{
-  const c=calc(F); if(c.usd<=0){toast("Cargá metros de aluminio, accesorios o vidrio");return}
-  if(!c.mo && !c.ex && !sinMoOk){ $("conf-mo").hidden=false; $("mo-box").classList.add("falta"); $("conf-mo").scrollIntoView({behavior:"smooth",block:"center"}); return }
-  sinMoOk=false; $("conf-mo").hidden=true; $("mo-box").classList.remove("falta");
-  const v=structuredClone(F); v.cant=String(cantV(v)); if(!v.nombre) v.nombre="Ventana "+(editIdx>=0?editIdx+1:items.length+1);
-  if(editIdx>=0){ items[editIdx]=v; toast("Ventana actualizada") } else { items.push(v); toast("Ventana guardada. Cargá la siguiente") }
-  const acab=F.acabado; editIdx=-1; F=blank(v.linea); F.acabado=acab; renderForm(); render();
-  $("v-titulo").scrollIntoView({behavior:"smooth",block:"start"}); $("v-nombre").focus({preventScroll:true});
-};
-$("v-exs").addEventListener("click",e=>{const i=e.target.dataset.vxdel; if(i!==undefined){F.exs.splice(+i,1);renderExs();updateForm()}});
-$("add-ex").onclick=()=>{F.exs=F.exs||[]; F.exs.push({c:"",monto:""}); renderExs(); $("v-exs").querySelector(".extra-row:last-child input")?.focus()};
-$("btn-cancel").onclick=()=>{editIdx=-1;F=blank();renderForm()};
-
-// ---- presupuesto ----
-function fechaTxt(){const v=$("c-fecha").value; if(!v) return ""; const [a,m,d]=v.split("-"); return `${d}/${m}/${a}`}
-function renderExtras(){
-  const hay=extras.some(x=>+x.monto); $("extras-viejos").hidden=!hay; if(!hay) extras=[];
-  $("extras").innerHTML=extras.map((x,i)=>`<div class="extra-row"><input data-ex="${i}" data-f="c" value="${esc(x.c)}" placeholder="Concepto"><input data-ex="${i}" data-f="monto" type="text" inputmode="decimal" autocomplete="off" min="0" value="${esc(x.monto)}" placeholder="$"><button class="x" data-exdel="${i}" aria-label="Quitar">×</button></div>`).join("");
-}
-function totals(){ const v=items.reduce((s,it)=>s+calc(it).pesos,0), e=extras.reduce((s,x)=>s+(+x.monto||0),0); return {v,e,total:v+e} }
-// Precio de cada ventana para el cliente: materiales + su parte de la mano de obra (proporcional), redondeado y cuadrado con el total
-function preciosCliente(){
-  const t=totals(), base=items.map(it=>calc(it).pesos);
-  let out=base.map(p=>Math.round(t.v>0? p+t.e*p/t.v : p+(items.length?t.e/items.length:0)));
-  const total=Math.round(t.total), dif=total-out.reduce((s,x)=>s+x,0);
-  if(out.length) out[out.length-1]+=dif;
-  return {out,total};
-}
-function render(){
-  $("q-num").textContent="N.º "+String(numero).padStart(4,"0");
-  $("q-fecha").textContent=fechaTxt();
-  $("q-cli").textContent=$("c-nombre").value||"Cliente sin nombre";
-  const pc=preciosCliente();
-  $("items").innerHTML = items.length ? items.map((it,i)=>{const c=calc(it);
-    const det=it.alu.filter(l=>+l.m).map(l=>`${esc(l.n.toLowerCase())} ${num(+l.m)} m`).join(" · ");
-    const med=(+it.ancho&&+it.alto)?` · ${num(+it.ancho)} × ${num(+it.alto)} m`:"";
-    return `<tr><td>${i+1}</td><td><b>${c.k} ×</b> ${esc(it.nombre)}${med}<span class="chip">${esc(it.linea)}</span><span class="chip">${esc(it.acabado)}</span><div class="d">${num(c.kg,2)} kg aluminio${c.m2?` · ${num(c.m2)} m² vidrio${it.vid?.tipo?" "+esc(it.vid.tipo):""}`:""}</div>${det?`<div class="d">Por ventana: ${det}</div>`:""}</td><td class="n">${pes(pc.out[i])}</td><td style="white-space:nowrap"><button class="btn ghost sm" data-edit="${i}">Editar</button><button class="x" data-del="${i}" aria-label="Quitar">×</button></td></tr>`}).join("")
-    : `<tr><td colspan="4" class="empty">Todavía no hay ventanas. Cargá los metros a la izquierda y tocá "Agregar al presupuesto".</td></tr>`;
-  const t=totals();
-  $("totales").innerHTML=`<div class="grand"><span>Precio final</span><span>${pes(pc.total)}</span></div>`;
-  const sm=items.reduce((a,it)=>{const c=calc(it); a.mat+=c.mat; a.mo+=c.mo; a.ex+=c.ex; return a},{mat:0,mo:0,ex:0});
-  $("interno").innerHTML=`<div><span>Materiales (aluminio, accesorios, vidrio)</span><span>${pes(sm.mat)}</span></div><div><span>Mano de obra</span><span>${pes(sm.mo)}</span></div><div><span>Extras</span><span>${pes(sm.ex+t.e)}</span></div><div class="grand"><span>Precio final</span><span>${pes(pc.total)}</span></div><div class="muted" style="font-size:.8rem">Dólar a $ ${num(P.dolar)}</div>`;
-  saveDraft();
-}
-function saveDraft(){ save("alucast-borrador-v5",{items,extras,F,editIdx,cli:[$("c-nombre").value,$("c-tel").value,$("c-fecha").value]}) }
-function texto(){
-  const t=totals(); let s=`*ALUCAST · Presupuesto N.º ${String(numero).padStart(4,"0")}*\n${fechaTxt()}\nCliente: ${$("c-nombre").value||"-"}\n\n`;
-  const pc=preciosCliente();
-  items.forEach((it,i)=>{const k=cantV(it), med=(+it.ancho&&+it.alto)?` ${num(+it.ancho)}x${num(+it.alto)} m`:"";
-    s+=`${i+1}. ${k} x ${it.nombre}${med} (${it.linea}, ${it.acabado.toLowerCase()}): ${pes(pc.out[i])}\n`});
-  return s+`\n*PRECIO FINAL: ${pes(pc.total)}*`;
-}
-function toast(m){const t=$("toast");t.textContent=m;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,2200)}
-$("items").onclick=e=>{const d=e.target.dataset;
-  if(d.del!==undefined){items.splice(+d.del,1); if(editIdx==+d.del){editIdx=-1;F=blank();renderForm()} render()}
-  if(d.edit!==undefined){editIdx=+d.edit; F=structuredClone(items[editIdx]); renderForm(); $("v-titulo").scrollIntoView({behavior:"smooth",block:"start"})}};
-$("extras").onclick=e=>{const i=e.target.dataset.exdel; if(i!==undefined){extras.splice(+i,1);renderExtras();render()}};
-$("btn-extra").onclick=()=>{extras.push({c:"",monto:""});renderExtras();render();$("extras").querySelector(".extra-row:last-child input")?.focus()};
-$("btn-nuevo").onclick=()=>{$("conf-nuevo").hidden=false};
-$("conf-no").onclick=()=>{$("conf-nuevo").hidden=true};
-$("conf-si").onclick=()=>{items=[];extras=[];editIdx=-1;F=blank();
-  ["c-nombre","c-tel"].forEach(id=>$(id).value="");$("c-fecha").value=hoy();
-  $("conf-nuevo").hidden=true;$("copia").hidden=true;numero++;save("alucast-num",numero);renderExtras();renderForm();render();toast("Presupuesto nuevo listo")};
-$("btn-guardar").onclick=()=>{if(!items.length){toast("Agregá al menos una ventana");return}
-  const all=load("alucast-hist-v4",[]), prev=all.find(q=>q.num===numero)||{}, h=all.filter(q=>q.num!==numero);
-  h.push({estado:prev.estado, entrega:prev.entrega, aceptadoEl:prev.aceptadoEl, entregadoEl:prev.entregadoEl, num:numero,cli:$("c-nombre").value,tel:$("c-tel").value,fecha:$("c-fecha").value,fechaTxt:fechaTxt(),items:structuredClone(items),extras:structuredClone(extras),total:totals().total});
-  save("alucast-hist-v4",h); toast("Guardado N.º "+String(numero).padStart(4,"0"))};
-$("btn-copiar").onclick=()=>{const s=texto(), ta=$("copia"); ta.value=s;
-  const fb=()=>{ta.hidden=false;ta.select();toast("Seleccionado: copialo con Ctrl+C")};
-  if(navigator.clipboard) navigator.clipboard.writeText(s).then(()=>{ta.hidden=true;toast("Copiado")}).catch(fb); else fb()};
-let aceptando=null, cambiando=null, borrando=null;
-const btnBorrar=q=>`<button class="btn warn sm" data-borrar="${q.num}">Eliminar</button>`;
-const confBorrar=q=> borrando==q.num ? `<div class="acept"><span>¿Eliminar el presupuesto ${nro(q.num)}${q.cli?` de ${esc(q.cli)}`:""}? No se puede deshacer.</span><button class="btn warn sm" data-borrarok="${q.num}">Sí, eliminar</button><button class="btn ghost sm" data-cancel="1">Cancelar</button></div>` : "";
-const nro=n=>"N.º "+String(n).padStart(4,"0");
-const dmy=v=>{ if(!v) return ""; const [a,m,d]=v.split("-"); return `${d}/${m}/${a}` };
-function diasHasta(v){ const a=new Date(v+"T00:00:00"), h=new Date(hoy()+"T00:00:00"); return Math.round((a-h)/864e5) }
-function updHist(fn){ const h=load("alucast-hist-v4",[]); fn(h); save("alucast-hist-v4",h); updBadge() }
-function updBadge(){ const n=load("alucast-hist-v4",[]).filter(q=>q.estado==="aceptado").length, b=$("badge-ent"); b.hidden=!n; b.textContent=n }
-function cabecera(q){ return `<div><b>${nro(q.num)}</b> · ${esc(q.cli||"Sin nombre")}${q.tel?` · ${esc(q.tel)}`:""}<div class="muted">${esc(q.fechaTxt)} · ${q.items.length} ventana(s) · <b style="color:var(--fg)">${pes(q.total)}</b></div></div>` }
-function formFecha(q,modo){ return `<div class="acept"><label>Fecha de entrega<input type="date" id="f-ent-${q.num}" value="${q.entrega||""}"></label><button class="btn sm" data-${modo}ok="${q.num}">${modo==="acep"?"Confirmar aceptado":"Guardar fecha"}</button><button class="btn ghost sm" data-cancel="1">Cancelar</button></div>` }
-function renderHist(){
-  const h=load("alucast-hist-v4",[]).filter(q=>!q.estado);
-  $("hist").innerHTML = h.length ? h.slice().reverse().map(q=>`<div class="hist-item">${cabecera(q)}<div class="actions"><button class="btn ghost sm" data-open="${q.num}">Abrir</button><button class="btn sm" data-acep="${q.num}">Aceptado</button>${btnBorrar(q)}</div>${aceptando==q.num?formFecha(q,"acep"):""}${confBorrar(q)}</div>`).join("")
-    : `<p class="empty">No hay presupuestos esperando respuesta. Los que guardes aparecen acá.</p>`;
-}
-let mesEnt="", mesOk="";
-const MESES=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
-const mesTxt=k=>{const [a,m]=k.split("-");return `${MESES[+m-1]} ${a}`};
-function selMes(id,lista,campo,actual){
-  const meses=[...new Set(lista.map(q=>(q[campo]||"").slice(0,7)).filter(Boolean))].sort().reverse();
-  if(actual && !meses.includes(actual)) actual="";
-  const sinFecha=lista.some(q=>!q[campo]);
-  $(id).innerHTML=`<option value="">Todos los meses (${lista.length})</option>`+
-    meses.map(k=>`<option value="${k}"${k===actual?" selected":""}>${mesTxt(k)} (${lista.filter(q=>(q[campo]||"").startsWith(k)).length})</option>`).join("")+
-    (sinFecha?`<option value="sin"${actual==="sin"?" selected":""}>Sin fecha</option>`:"");
-  return actual;
-}
-const enMes=(q,campo,mes)=>!mes || (mes==="sin"?!q[campo]:(q[campo]||"").startsWith(mes));
-function renderEnt(){
-  const h=load("alucast-hist-v4",[]);
-  const todosPend=h.filter(q=>q.estado==="aceptado");
-  mesEnt=selMes("mes-ent",todosPend,"entrega",mesEnt);
-  const pend=todosPend.filter(q=>enMes(q,"entrega",mesEnt)).sort((a,b)=>(a.entrega||"9").localeCompare(b.entrega||"9"));
-  const totPend=pend.reduce((s,q)=>s+(q.total||0),0);
-  $("ent").innerHTML = (pend.length&&mesEnt?`<p class="note" style="margin:0 0 4px">${pend.length} trabajo(s) · ${pes(totPend)}</p>`:"") + (pend.length ? pend.map(q=>{
-    let chip=`<span class="chip">Sin fecha</span>`;
-    if(q.entrega){ const d=diasHasta(q.entrega);
-      chip = d<0?`<span class="chip late">Atrasado ${-d} día${d===-1?"":"s"}</span>` : d===0?`<span class="chip late">Se entrega hoy</span>` : `<span class="chip">Faltan ${d} día${d===1?"":"s"}</span>` }
-    return `<div class="hist-item">${cabecera(q)}<div style="text-align:right"><div><b>Entrega ${dmy(q.entrega)||"–"}</b></div>${chip}</div><div class="actions" style="flex-basis:100%"><button class="btn ghost sm" data-open="${q.num}">Abrir</button><button class="btn ghost sm" data-cambiar="${q.num}">Cambiar fecha</button><button class="btn sm" data-entregado="${q.num}">Entregado</button><button class="btn ghost sm" data-volver="${q.num}">Volver a guardados</button>${btnBorrar(q)}</div>${cambiando==q.num?formFecha(q,"camb"):""}${confBorrar(q)}</div>` }).join("")
-    : `<p class="empty">${todosPend.length?"No hay trabajos para entregar en ese mes.":'No hay trabajos por entregar. Marcá un presupuesto como "Aceptado" en Guardados.'}</p>`);
-  const todosOk=h.filter(q=>q.estado==="entregado");
-  mesOk=selMes("mes-ok",todosOk,"entregadoEl",mesOk);
-  const ok=todosOk.filter(q=>enMes(q,"entregadoEl",mesOk)).sort((a,b)=>(b.entregadoEl||"").localeCompare(a.entregadoEl||""));
-  const totOk=ok.reduce((s,q)=>s+(q.total||0),0);
-  $("ent-ok").innerHTML = (ok.length&&mesOk?`<p class="note" style="margin:0 0 4px">${ok.length} trabajo(s) · ${pes(totOk)}</p>`:"") + (ok.length ? ok.map(q=>`<div class="hist-item">${cabecera(q)}<div style="text-align:right"><span class="chip ok">Entregado ${dmy(q.entregadoEl)}</span></div><div class="actions" style="flex-basis:100%"><button class="btn ghost sm" data-open="${q.num}">Abrir</button><button class="btn ghost sm" data-reabrir="${q.num}">Pasar a por entregar</button>${btnBorrar(q)}</div>${confBorrar(q)}</div>`).join("")
-    : `<p class="empty">${todosOk.length?"No hay trabajos entregados en ese mes.":"Todavía no hay trabajos entregados."}</p>`);
-}
-function accionesTrabajos(e){
-  const d=e.target.dataset;
-  if(d.open) return abrir(d.open);
-  if(d.acep){ aceptando=+d.acep; renderHist(); $("f-ent-"+d.acep)?.focus(); return }
-  if(d.cambiar){ cambiando=+d.cambiar; renderEnt(); $("f-ent-"+d.cambiar)?.focus(); return }
-  if(d.cancel){ aceptando=cambiando=borrando=null; renderHist(); renderEnt(); return }
-  if(d.borrar){ borrando=+d.borrar; aceptando=cambiando=null; renderHist(); renderEnt(); return }
-  if(d.borrarok){ const n=+d.borrarok; updHist(h=>{const i=h.findIndex(x=>x.num===n); if(i>=0) h.splice(i,1)}); borrando=null; renderHist(); renderEnt(); toast(`${nro(n)} eliminado`); return }
-  if(d.acepok||d.cambok){ const n=+(d.acepok||d.cambok), f=$("f-ent-"+n).value;
-    if(!f){ toast("Elegí la fecha de entrega"); return }
-    updHist(h=>{const q=h.find(x=>x.num===n); q.entrega=f; if(d.acepok){ q.estado="aceptado"; q.aceptadoEl=hoy() } });
-    aceptando=cambiando=null; renderHist(); renderEnt(); toast(d.acepok?`${nro(n)} pasó a Por entregar`:"Fecha actualizada"); return }
-  if(d.entregado){ const n=+d.entregado; updHist(h=>{const q=h.find(x=>x.num===n); q.estado="entregado"; q.entregadoEl=hoy()}); renderEnt(); toast(`${nro(n)} entregado`); return }
-  if(d.volver){ const n=+d.volver; updHist(h=>{const q=h.find(x=>x.num===n); q.estado=undefined; q.entrega=undefined}); renderEnt(); toast(`${nro(n)} volvió a Guardados`); return }
-  if(d.reabrir){ const n=+d.reabrir; updHist(h=>{const q=h.find(x=>x.num===n); q.estado="aceptado"; q.entregadoEl=undefined}); renderEnt(); return }
-}
-$("mes-ent").onchange=e=>{mesEnt=e.target.value;renderEnt()};
-$("mes-ok").onchange=e=>{mesOk=e.target.value;renderEnt()};
-$("hist").onclick=accionesTrabajos; $("ent").onclick=accionesTrabajos; $("ent-ok").onclick=accionesTrabajos;
-function abrir(n){ const q=load("alucast-hist-v4",[]).find(x=>x.num==n); if(!q)return;
-  numero=q.num; items=q.items.map(it=>({linea:"Probba",...it})); extras=q.extras||[]; $("c-nombre").value=q.cli; $("c-tel").value=q.tel||""; $("c-fecha").value=q.fecha||hoy(); editIdx=-1; F=blank(); renderExtras(); renderForm(); show("presu"); render()};
-
-// ---- lista de precios ----
-function renderVidrios(){
-  $("p-vid").innerHTML=(P.vidrios||[]).map((g,i)=>`<tr><td><input data-gv="${i}" data-f="n" value="${esc(g.n)}"></td><td class="n"><input type="text" inputmode="decimal" autocomplete="off" data-gv="${i}" data-f="usd" value="${g.usd}"></td><td><button class="x" data-gvdel="${i}" aria-label="Quitar">×</button></td></tr>`).join("");
-}
-function renderPrecios(){
-  renderVidrios();
-  $("p-gen").innerHTML=`<label>Dólar (media BROU)<input value="$ ${num(P.dolar)}" readonly tabindex="-1" title="Se carga arriba en la pestaña Presupuesto"></label>`+
-    Object.keys(P.acabados).map(k=>`<label>Precio general ${esc(k.toLowerCase())} (U$S/kg)<input type="text" inputmode="decimal" autocomplete="off" step="0.01" data-acab="${esc(k)}" value="${P.acabados[k]}"></label>`).join("")+
-    `<label>N.º de presupuesto actual<input type="text" inputmode="numeric" autocomplete="off" data-num="1" value="${numero}"></label>`+
-    `<label>Cobrar aluminio por<select data-cb="1"><option value="0"${P.cobrarBarra?"":" selected"}>Metros cargados</option><option value="1"${P.cobrarBarra?" selected":""}>Barra entera</option></select></label><label>Largo de barra (m)<input type="text" inputmode="decimal" autocomplete="off" step="0.1" min="1" data-g="barra" value="${P.barra}"></label>`;
-  if(PL>=P.lineas.length) PL=0;
-  const LN=P.lineas[PL];
-  $("p-lineas").innerHTML=P.lineas.map((l,i)=>`<button class="tab" role="tab" data-pl="${i}" aria-selected="${i===PL}">${esc(l.n)}${faltanKg(l.n)?' <span class="chip">faltan kg</span>':""}</button>`).join("")+`<button class="btn ghost sm" id="add-linea">+ Nueva línea</button>`;
-  $("p-lnombre").value=LN?LN.n:""; $("p-lt1").textContent=$("p-lt2").textContent=LN?LN.n:"";
-  $("p-ldel-conf").hidden=true;
-  if(!LN){$("p-perf").innerHTML="";$("p-acc").innerHTML="";return}
-  const AC=Object.keys(P.acabados);
-  $("p-perf-head").innerHTML=`<tr><th>Artículo</th><th class="n">Kg / metro</th><th class="n">Kg / barra</th>${AC.map(k=>`<th class="n">${esc(k)}<br><span style="text-transform:none;letter-spacing:0">U$S por kg</span></th>`).join("")}<th></th></tr>`;
-  $("p-perf").innerHTML=LN.perfiles.map((p,i)=>`<tr><td><input data-pf="${i}" data-f="n" value="${esc(p.n)}"></td><td class="n"><input type="text" inputmode="decimal" autocomplete="off" step="0.001" data-pf="${i}" data-f="kgm" value="${p.kgm}"></td><td class="n"><input type="text" inputmode="decimal" autocomplete="off" step="0.001" min="0" id="pk-${i}" data-kb="${i}" title="Kg de una barra entera"></td>${AC.map(k=>`<td class="n"><input type="text" inputmode="decimal" autocomplete="off" step="0.01" min="0" data-pp="${i}" data-ac="${esc(k)}" value="${p.precio?.[k]??""}" placeholder="${P.acabados[k]}" title="Vacío: usa el precio general de ${esc(k.toLowerCase())}"><div class="d" id="pm-${i}-${esc(k)}" style="font-size:.75rem;color:var(--muted)"></div></td>`).join("")}<td><button class="x" data-pfdel="${i}" aria-label="Quitar">×</button></td></tr>`).join("");
-  $("p-acc").innerHTML=LN.accesorios.map((a,i)=>`<tr><td><input data-ax="${i}" data-f="n" value="${esc(a.n)}"></td><td class="n"><input type="text" inputmode="decimal" autocomplete="off" step="0.01" data-ax="${i}" data-f="usd" value="${a.usd}"></td><td><button class="x" data-axdel="${i}" aria-label="Quitar">×</button></td></tr>`).join("");
-  calcPrecios();
-}
-function calcPrecios(){
-  (P.lineas[PL]?.perfiles||[]).forEach((p,i)=>{ const c=$("pk-"+i); if(c && document.activeElement!==c) c.value=Math.round(p.kgm*P.barra*1000)/1000;
-    const km=document.querySelector(`[data-pf="${i}"][data-f="kgm"]`); if(km && document.activeElement!==km) km.value=Math.round(p.kgm*10000)/10000;
-    Object.keys(P.acabados).forEach(k=>{const t=document.getElementById(`pm-${i}-${k}`); if(t) t.textContent=`U$S ${num(p.kgm*precioKg(p,k))} /m`}) });
-}
-function rename(lista,oldN,newN){ const lin=P.lineas[PL].n; [F,...items].forEach(v=>{ if(v.linea===lin) v[lista].forEach(l=>{ if(l.n===oldN) l.n=newN }) }) }
-function precioCambio(full){ save("alucast-lista-v5",P); if(full) renderPrecios(); else calcPrecios(); renderForm(); render() }
-$("v-precios").addEventListener("input",e=>{
-  const el=e.target, d=el.dataset, v=el.inputMode==="decimal"?(+el.value||0):el.value;
-  if(d.num){ const n=parseInt(el.value); if(n>0){ numero=n; save("alucast-num",numero); render() } return }
-  if(d.cb){ P.cobrarBarra=el.value==="1" }
-  else if(d.g){ if(d.g==="barra"&&v<1) return; P[d.g]=v }
-  else if(d.acab){ P.acabados[d.acab]=v; document.querySelectorAll(`[data-pp][data-ac="${d.acab}"]`).forEach(x=>x.placeholder=v) }
-  else if(d.pf!==undefined){ const p=P.lineas[PL].perfiles[+d.pf]; if(d.f==="n") rename("alu",p.n,v); p[d.f]=v; if(d.f==="kgm"){ const t=$("p-lineas").children[PL]; if(t) t.innerHTML=esc(P.lineas[PL].n)+(faltanKg(P.lineas[PL].n)?' <span class="chip">faltan kg</span>':"") } }
-  else if(d.kb!==undefined){ const p=P.lineas[PL].perfiles[+d.kb]; p.kgm=(+el.value||0)/(P.barra||6.8);
-    const t=$("p-lineas").children[PL]; if(t) t.innerHTML=esc(P.lineas[PL].n)+(faltanKg(P.lineas[PL].n)?' <span class="chip">faltan kg</span>':"") }
-  else if(d.pp!==undefined){ const p=P.lineas[PL].perfiles[+d.pp]; p.precio=p.precio||{}; if(el.value==="") delete p.precio[d.ac]; else p.precio[d.ac]=+el.value||0 }
-  else if(d.gv!==undefined){ const g=P.vidrios[+d.gv]; if(d.f==="n"){ const nn=el.value; [F,...items].forEach(x=>{ if(x.vid&&x.vid.tipo===g.n) x.vid.tipo=nn }); g.n=nn } else g.usd=+el.value||0 }
-  else if(d.ax!==undefined){ const a=P.lineas[PL].accesorios[+d.ax]; if(d.f==="n") rename("acc",a.n,v); a[d.f]=v }
-  else if(el.id==="p-lnombre"){ const nn=el.value.trim(), old=P.lineas[PL].n; if(!nn||P.lineas.some((l,i)=>i!==PL&&l.n===nn)) return;
-    [F,...items].forEach(x=>{ if(x.linea===old) x.linea=nn }); P.lineas[PL].n=nn; $("p-lt1").textContent=$("p-lt2").textContent=nn;
-    const t=$("p-lineas").children[PL]; if(t) t.textContent=nn; save("alucast-lista-v5",P); renderLineas(); render(); return }
-  else return;
-  precioCambio(false);
-});
-$("v-precios").addEventListener("click",e=>{const d=e.target.dataset, LN=P.lineas[PL];
-  if(d.pl!==undefined){PL=+d.pl;renderPrecios();return}
-  if(e.target.id==="add-linea"){let k=P.lineas.length+1;while(P.lineas.some(l=>l.n==="Nueva línea "+k))k++;
-    P.lineas.push({n:"Nueva línea "+k,perfiles:[],accesorios:[]});PL=P.lineas.length-1;precioCambio(true);$("p-lnombre").focus();$("p-lnombre").select();return}
-  if(e.target.id==="p-ldel"){ if(P.lineas.length<2){toast("Tiene que quedar al menos una línea");return} $("p-ldel-conf").hidden=false; return }
-  if(e.target.id==="p-ldel-no"){ $("p-ldel-conf").hidden=true; return }
-  if(e.target.id==="p-ldel-si"){ P.lineas.splice(PL,1); PL=0; if(!P.lineas.some(l=>l.n===F.linea)) F=blank(); precioCambio(true); toast("Línea borrada"); return }
-  if(d.pfdel!==undefined){LN.perfiles.splice(+d.pfdel,1);precioCambio(true)}
-  if(d.axdel!==undefined){LN.accesorios.splice(+d.axdel,1);precioCambio(true)}
-  if(d.gvdel!==undefined){ if((P.vidrios||[]).length<2){toast("Tiene que quedar al menos un vidrio");return} P.vidrios.splice(+d.gvdel,1); precioCambio(true) }});
-$("add-vid").onclick=()=>{P.vidrios=P.vidrios||[]; P.vidrios.push({n:"Nuevo vidrio "+(P.vidrios.length+1),usd:0}); precioCambio(true); const ins=$("p-vid").querySelectorAll('[data-f="n"]'); ins[ins.length-1]?.select()};
-$("add-perf").onclick=()=>{const p=P.lineas[PL].perfiles;p.push({n:"NUEVO PERFIL "+(p.length+1),kgm:0});precioCambio(true)};
-$("add-acc").onclick=()=>{const a=P.lineas[PL].accesorios;a.push({n:"NUEVO ACCESORIO "+(a.length+1),usd:0});precioCambio(true)};
-$("btn-reset-precios").onclick=()=>{P=structuredClone(DEF);PL=0;if(!P.lineas.some(l=>l.n===F.linea))F=blank();precioCambio(true);renderDolar();toast("Precios de la planilla restaurados")};
-// ---- dólar BROU: media entre compra y venta ----
-function renderDolar(){
-  $("d-compra").value=P.compra??""; $("d-venta").value=P.venta??"";
-  pintarDolar();
-}
-let dolarAuto=null; // última cotización automática recibida
-function pintarDolar(){
-  $("d-media").value="$ "+num(P.dolar);
-  const e=$("dolar-estado");
-  const esAuto = dolarAuto && String(P.compra)===String(dolarAuto.compra) && String(P.venta)===String(dolarAuto.venta);
-  if(esAuto) e.innerHTML=`<span class="chip ${dolarAuto.fecha===hoy()?"ok":"late"}">Automático · ${dolarAuto.fecha===hoy()?"hoy":dmy(dolarAuto.fecha)}</span>`;
-  else if(P.dolarFecha===hoy()) e.innerHTML=`<span class="chip ok">Cargado a mano hoy</span>`+(dolarAuto?` <button class="btn ghost sm" id="d-volver">Usar automático</button>`:"");
-  else e.innerHTML=`<span class="chip late">${P.dolarFecha?"Del "+dmy(P.dolarFecha)+" · actualizalo":"Cargá la cotización de hoy"}</span>`;
-}
-function cambioDolar(){
-  const c=+$("d-compra").value||0, v=+$("d-venta").value||0;
-  P.compra=$("d-compra").value; P.venta=$("d-venta").value;
-  if(c>0&&v>0){ P.dolar=Math.round((c+v)/2*100)/100; P.dolarFecha=hoy() }
-  else if(c>0||v>0){ P.dolar=c||v; P.dolarFecha=hoy() }
-  save("alucast-lista-v5",P); pintarDolar(); updateForm(); render();
-}
-$("d-compra").addEventListener("input",e=>{e.stopPropagation();cambioDolar()});
-$("d-venta").addEventListener("input",e=>{e.stopPropagation();cambioDolar()});
-function aplicarAuto(){
-  if(!dolarAuto) return;
-  P.compra=String(dolarAuto.compra); P.venta=String(dolarAuto.venta);
-  P.dolar=+dolarAuto.media || Math.round((+dolarAuto.compra + +dolarAuto.venta)/2*100)/100; P.dolarFecha=dolarAuto.fecha;
-  save("alucast-lista-v5",P); renderDolar(); updateForm(); render();
-}
-$("dolar-estado").addEventListener("click",e=>{ if(e.target.id==="d-volver") aplicarAuto() });
-renderDolar();
-// Cotización automática: se lee de dolar.json (se actualiza en el servidor)
-async function leerDolarAuto(){
-  try{
-    const r=await fetch("dolar.json?t="+Date.now(),{cache:"no-store"}); if(!r.ok) return;
-    const d=await r.json(); if(!(+d.compra>0 && +d.venta>0)) return;
-    const nueva = !dolarAuto || dolarAuto.actualizado!==d.actualizado;
-    const anterior=dolarAuto||load("alucast-dolar-auto",null); dolarAuto=d; save("alucast-dolar-auto",d);
-    const usabaAuto = anterior && String(P.compra)===String(anterior.compra) && String(P.venta)===String(anterior.venta);
-    if(nueva && (usabaAuto || !P.dolarFecha || d.fecha>=P.dolarFecha)) aplicarAuto(); else pintarDolar();
-  }catch(e){ dolarAuto=dolarAuto||load("alucast-dolar-auto",null); pintarDolar() }
-}
-leerDolarAuto();
-document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible") leerDolarAuto() });
-
-const VISTAS=["presu","hist","entregas","precios","backup"];
-// ---- copia de seguridad ----
-const KEYS=["alucast-lista-v5","alucast-hist-v4","alucast-num","alucast-borrador-v5"];
-$("bk-exp").onclick=()=>{
-  const o={app:"alucast",version:1,exportado:new Date().toISOString(),datos:{}};
-  KEYS.forEach(k=>{try{const v=localStorage.getItem(k); if(v!==null) o.datos[k]=JSON.parse(v)}catch(e){}});
-  const blob=new Blob([JSON.stringify(o,null,1)],{type:"application/json"}), a=document.createElement("a");
-  a.href=URL.createObjectURL(blob); a.download=`alucast-copia-${hoy()}.json`; document.body.appendChild(a); a.click();
-  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000); toast("Copia exportada");
-};
-let bkPend=null;
-$("bk-imp").onchange=async e=>{
-  const f=e.target.files[0]; e.target.value=""; if(!f) return;
-  try{ const o=JSON.parse(await f.text()); if(o.app!=="alucast"||!o.datos) throw 0;
-    bkPend=o; const n=(o.datos["alucast-hist-v4"]||[]).length;
-    $("bk-txt").textContent=`La copia tiene ${n} presupuesto(s) guardado(s), del ${dmy(o.exportado.slice(0,10))}. Va a reemplazar todo lo de este dispositivo.`; $("bk-conf").hidden=false;
-  }catch(err){ toast("Ese archivo no es una copia de Alucast") }
-};
-$("bk-no").onclick=()=>{bkPend=null;$("bk-conf").hidden=true};
-$("bk-si").onclick=()=>{ if(!bkPend) return; KEYS.forEach(k=>{ if(k in bkPend.datos) save(k,bkPend.datos[k]) }); location.reload() };
-function show(v){VISTAS.forEach(k=>{$("v-"+k).hidden=k!==v;$("t-"+k).setAttribute("aria-selected",k===v)}); aceptando=cambiando=borrando=null; if(v==="hist")renderHist(); if(v==="entregas")renderEnt(); if(v==="precios")renderPrecios()}
-VISTAS.forEach(k=>$("t-"+k).onclick=()=>show(k));
-updBadge();
-
-// ---- arranque: borrador o ejemplo (basado en el presupuesto de la planilla) ----
-const b=load("alucast-borrador-v5",null);
-if(b&&b.F){ items=b.items||[]; extras=b.extras||[]; F=b.F; editIdx=b.editIdx??-1; [$("c-nombre").value,$("c-tel").value,$("c-fecha").value]=b.cli }
-else{
-  $("c-nombre").value="Cliente de ejemplo"; $("c-fecha").value=hoy();
-  items=[{linea:"Probba",nombre:"Ventana living 3 × 1,5 m",acabado:"Negro",
-    alu:[{n:"RIEL PROBBA",m:"6"},{n:"LATERAL MARCO",m:"3"},{n:"ENGANCHE HOJA",m:"3"},{n:"LATERAL HOJA",m:"3"},{n:"DIVISOR HOJA",m:"6"}],
-    acc:[{n:"MANIJAS",q:"2"}], vid:{cant:"1",ancho:"3",alto:"1.5"}}];
-  extras=[];
-  F=blank(); F.alu[0].m="2.8";
-}
-if(!$("c-fecha").value) $("c-fecha").value=hoy();
-renderExtras(); renderForm(); render();
-</script>
-
-<script>if("serviceWorker" in navigator){addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}))}</script>
-</body></html>
+<script src="plataforma.js"></script>
+<script src="utilidades.js"></script>
+<script src="datos.js"></script>
+<script src="calculo.js"></script>
+<script src="ventana.js"></script>
+<script src="presupuesto.js"></script>
+<script src="trabajos.js"></script>
+<script src="precios.js"></script>
+<script src="dolar.js"></script>
+<script src="copia.js"></script>
+<script src="pdf.js"></script>
+<script src="app.js"></script>
+<script src="sw-registro.js"></script>
+</body>
+</html>
