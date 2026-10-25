@@ -1,0 +1,27 @@
+ALUCAST PARA WINDOWS
+
+1. Copiá esta carpeta "Alucast" a un lugar fijo, por ejemplo Documentos.
+2. Abrí Alucast.exe con doble clic.
+   La primera vez Windows puede mostrar "Windows protegió su PC":
+   tocá "Más información" y después "Ejecutar de todas formas".
+3. Para tenerlo a mano: clic derecho en Alucast.exe > "Mostrar más opciones" >
+   "Enviar a" > "Escritorio (crear acceso directo)".
+
+El archivo resources.neu tiene que quedar siempre al lado de Alucast.exe.
+El dólar está fijo en $ 41. Lo cambiás con las flechas ▲ ▼ (de a $ 0,50).
+
+PDF PARA EL CLIENTE
+- En "Ajustes y copia" cargá tus datos (teléfono, dirección, condiciones).
+- En el presupuesto tocá "Descargar PDF" y elegí "Guardar como PDF"
+  (o "Microsoft Print to PDF") como impresora.
+- El PDF muestra solo el precio de cada ventana y el total: la mano de obra
+  y los costos internos no aparecen.
+
+COPIA DE SEGURIDAD
+Para pasar tus datos a otra compu usá la pestaña "Ajustes y copia".
+
+CARPETAS
+- codigo-fuente: el código del programa ordenado por archivos. Si se modifica,
+  se vuelve a armar resources.neu con codigo-fuente\empaquetar.ps1.
+- respaldo-original: la versión anterior del programa y una copia de tus datos
+  tal como estaban antes de la actualización.

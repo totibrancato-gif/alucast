@@ -1,0 +1,33 @@
+ALUCAST PARA MAC
+
+INSTALAR
+1. Abrí el archivo Alucast-Mac.zip con doble clic. Aparece "Alucast".
+2. Arrastrá Alucast a la carpeta Aplicaciones.
+3. La primera vez, abrilo con clic derecho (o Control + clic) > "Abrir" > "Abrir".
+   Si la Mac no te deja, andá a Configuración del Sistema > Privacidad y seguridad,
+   bajá hasta el aviso de Alucast y tocá "Abrir igualmente".
+   Desde ahí en adelante se abre con doble clic, como cualquier programa.
+
+SI DICE QUE "ESTÁ DAÑADO" O "NO SE PUEDE ABRIR"
+Pasa porque el programa no está registrado en Apple, no porque tenga algo malo.
+Abrí la app "Terminal", pegá esta línea y apretá Enter:
+
+   xattr -cr /Applications/Alucast.app
+
+Después abrilo de nuevo.
+
+TUS DATOS
+La Mac guarda sus propios presupuestos y precios, aparte de los de la PC.
+Para pasar lo que tenés en Windows:
+  - En la PC: pestaña "Ajustes y copia" > "Exportar copia".
+  - Pasá ese archivo a la Mac (mail, WhatsApp, pendrive).
+  - En la Mac: pestaña "Ajustes y copia" > "Importar copia".
+
+Si ya tenías Alucast en la Mac: arrastrá el nuevo a Aplicaciones y elegí "Reemplazar".
+Tus presupuestos no se pierden.
+
+El dólar está fijo en $ 41. Lo cambiás con las flechas ▲ ▼ (de a $ 0,50).
+Funciona en Macs con chip Apple (M1, M2, M3, M4) y en las de Intel, con macOS 10.15 o más nuevo.
+
+PDF: en el presupuesto tocá "Descargar PDF" y, en la ventana de impresión,
+abajo a la izquierda elegí "PDF" > "Guardar como PDF".

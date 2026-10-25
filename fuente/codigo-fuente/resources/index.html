@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <!-- Seguridad: solo se ejecuta el código de la propia app (nada de afuera ni insertado en la página) -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' ws: http://127.0.0.1:* http://localhost:*; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="theme-color" content="#1d5a86">
+  <title>Presupuestos Alucast</title>
+  <link rel="icon" type="image/png" href="icon-512.png">
+  <link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+
+<div class="wrap">
+  <header class="brand">
+    <div class="marca">
+      <!-- Menú desplegable (arriba a la izquierda) -->
+      <div class="menu">
+        <button class="menu-btn" id="menu-btn" aria-expanded="false" aria-controls="menu-panel" aria-label="Abrir menú">
+          <span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>
+        </button>
+      </div>
+      <div>
+        <h1 class="logo">Alu<span>cast</span></h1>
+        <div class="sub">Aberturas de aluminio · Presupuestador</div>
+      </div>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="Secciones">
+      <button class="tab" role="tab" id="t-presu" aria-controls="v-presu" aria-selected="true">Presupuesto</button>
+      <button class="tab" role="tab" id="t-hist" aria-controls="v-hist" aria-selected="false" tabindex="-1">Guardados</button>
+      <button class="tab" role="tab" id="t-entregas" aria-controls="v-entregas" aria-selected="false" tabindex="-1">Por entregar <span class="badge" id="badge-ent" hidden></span></button>
+      <button class="tab" role="tab" id="t-precios" aria-controls="v-precios" aria-selected="false" tabindex="-1">Lista de precios</button>
+      <button class="tab" role="tab" id="t-backup" aria-controls="v-backup" aria-selected="false" tabindex="-1">Ajustes y copia</button>
+    </nav>
+  </header>
+
+  <!-- ================= PRESUPUESTO ================= -->
+  <div id="v-presu" class="grid" role="tabpanel" aria-labelledby="t-presu">
+    <div class="stack">
+      <section class="panel" id="dolar-box">
+        <div class="dolar">
+          <h2>Dólar</h2>
+          <div class="dolar-ctrl" role="group" aria-label="Cotización del dólar">
+            <button class="btn ghost flecha" id="d-bajar" aria-label="Bajar el dólar 0,50">▼</button>
+            <output class="dolar-valor" id="d-valor" aria-live="polite"></output>
+            <button class="btn ghost flecha" id="d-subir" aria-label="Subir el dólar 0,50">▲</button>
+          </div>
+          <span class="note">Las flechas suben o bajan $ 0,50</span>
+        </div>
+      </section>
+
+      <section class="panel" id="cliente">
+        <h2>Cliente</h2>
+        <div class="fields">
+          <label>Nombre<input id="c-nombre" autocomplete="off"></label>
+          <label>Teléfono<input id="c-tel" inputmode="tel" autocomplete="off"></label>
+          <label>Fecha<input id="c-fecha" type="date"></label>
+        </div>
+      </section>
+
+      <section class="panel" id="form-ventana">
+        <h2 id="v-titulo">Nueva ventana</h2>
+        <h3>Tipo de ventana</h3>
+        <div class="tabs lineas" role="group" aria-label="Tipo de ventana" id="lineas"></div>
+        <div class="confirm arriba" id="aviso-linea" hidden></div>
+        <div class="fields">
+          <label>Nombre de la ventana<input id="v-nombre" placeholder="Ej: Dormitorio" autocomplete="off"></label>
+          <label>Cantidad de ventanas<input id="v-cant" type="text" inputmode="decimal" autocomplete="off"></label>
+          <label>Ancho (m)<input id="v-ancho" type="text" inputmode="decimal" autocomplete="off"></label>
+          <label>Alto (m)<input id="v-alto" type="text" inputmode="decimal" autocomplete="off"></label>
+        </div>
+
+        <h3>Aluminio <small>· metros para una ventana</small></h3>
+        <div class="tbl-wrap">
+          <table class="lines">
+            <thead><tr><th>Artículo</th><th class="n">Metros</th><th class="n" id="ab-head">Barras</th><th class="n">Kg</th><th><span class="sr">Quitar</span></th></tr></thead>
+            <tbody id="l-alu"></tbody>
+          </table>
+        </div>
+        <button class="btn ghost sm mas" id="add-alu">+ Agregar artículo</button>
+        <p class="note" id="nota-barra"></p>
+
+        <h3>Accesorios <small>· para una ventana</small></h3>
+        <div class="tbl-wrap">
+          <table class="lines">
+            <thead><tr><th>Artículo</th><th class="n">Cantidad</th><th class="n">U$S</th><th><span class="sr">Quitar</span></th></tr></thead>
+            <tbody id="l-acc"></tbody>
+          </table>
+        </div>
+        <button class="btn ghost sm mas" id="add-acc-l">+ Agregar accesorio</button>
+
+        <h3>Vidrio <small>· paños de una ventana</small></h3>
+        <p class="note intro" id="nota-vid"></p>
+        <div class="fields">
+          <label>Tipo de vidrio<select id="g-tipo"></select></label>
+          <label>Cantidad<input id="g-cant" type="text" inputmode="decimal" autocomplete="off"></label>
+          <label>Ancho (m)<input id="g-ancho" type="text" inputmode="decimal" autocomplete="off"></label>
+          <label>Alto (m)<input id="g-alto" type="text" inputmode="decimal" autocomplete="off"></label>
+          <label><span id="g-m2-et">M² totales</span><input id="g-m2" readonly tabindex="-1"></label>
+        </div>
+
+        <div class="mo-box" id="mo-box">
+          <h3>Mano de obra y extras de esta ventana</h3>
+          <p class="note intro">En pesos. La mano de obra es por cada ventana y se multiplica por la cantidad; los extras son el total. Van incluidos en su precio; el cliente no los ve por separado.</p>
+          <label class="mo-campo">Mano de obra por ventana ($)<input id="v-mo" data-pesos type="text" inputmode="decimal" autocomplete="off" placeholder="0"></label>
+          <div class="mo-titulo">Extras</div>
+          <div id="v-exs"></div>
+          <button class="btn ghost sm" id="add-ex">+ Agregar extra</button>
+        </div>
+
+        <h3>Precio de la ventana · elegí el acabado</h3>
+        <div class="fin" id="fin" role="radiogroup" aria-label="Acabado"></div>
+        <p class="sr" id="fin-vivo" aria-live="polite"></p>
+
+        <div class="actions">
+          <button class="btn" id="btn-add">Agregar al presupuesto</button>
+          <button class="btn ghost" id="btn-cancel" hidden>Cancelar edición</button>
+        </div>
+        <p class="error" id="form-error" role="alert" hidden></p>
+        <div class="confirm" id="conf-mo" role="alertdialog" aria-labelledby="conf-mo-txt" hidden>
+          <span id="conf-mo-txt">Esta ventana no tiene mano de obra ni extras. ¿La guardás igual?</span>
+          <button class="btn sm" id="conf-mo-cargar">Cargar mano de obra</button>
+          <button class="btn ghost sm" id="conf-mo-si">Guardar sin mano de obra</button>
+        </div>
+      </section>
+    </div>
+
+    <div class="stack columna-presupuesto">
+      <section class="panel">
+        <div class="quote-head">
+          <div><h2 id="q-h" tabindex="-1">Presupuesto</h2><div class="qnum" id="q-num"></div></div>
+          <div class="muted der"><div id="q-fecha"></div><div id="q-cli"></div></div>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Ventana</th><th class="n">Precio</th><th><span class="sr">Acciones</span></th></tr></thead>
+            <tbody id="items"></tbody>
+          </table>
+        </div>
+        <div class="moneda-fila precio-en">
+          <span class="moneda-et" id="q-moneda-et">Precio en</span>
+          <div class="tabs moneda" role="group" aria-labelledby="q-moneda-et" id="q-moneda">
+            <button class="tab" data-qmoneda="UYU" aria-pressed="true">$ Pesos</button>
+            <button class="tab" data-qmoneda="USD" aria-pressed="false">U$S Dólares</button>
+          </div>
+        </div>
+        <div class="totals" id="totales"></div>
+        <div class="actions">
+          <button class="btn" id="btn-guardar">Guardar</button>
+          <button class="btn" id="btn-pdf">Descargar PDF</button>
+          <button class="btn ghost" id="btn-copiar">Copiar para WhatsApp</button>
+          <button class="btn warn quieto" id="btn-nuevo">Borrar / Nuevo</button>
+        </div>
+        <div class="confirm" id="conf-nuevo" role="alertdialog" aria-labelledby="conf-nuevo-txt" hidden>
+          <span id="conf-nuevo-txt"></span>
+          <button class="btn warn" id="conf-si">Sí, borrar</button>
+          <button class="btn ghost" id="conf-no">Cancelar</button>
+        </div>
+        <textarea id="copia" hidden readonly aria-label="Texto para WhatsApp"></textarea>
+      </section>
+
+      <section class="panel especs" id="especs-box">
+        <h2>Especificaciones</h2>
+        <p class="note intro">Salen en el PDF de este presupuesto. Cargalas antes de enviarlo (ej.: color de vidrio, plazo de entrega, forma de pago).</p>
+        <div id="especs"></div>
+        <button class="btn ghost sm" id="add-espec">+ Agregar especificación</button>
+      </section>
+
+      <section class="panel interno">
+        <h2>Resumen interno</h2>
+        <p class="note intro">Solo lo ves vos. La mano de obra y los extras se cargan en cada ventana y van incluidos en su precio; el cliente no los ve por separado.</p>
+        <div id="extras-viejos" hidden>
+          <p class="note intro">Extras generales de este presupuesto (de la versión anterior):</p>
+          <div id="extras"></div>
+        </div>
+        <div class="totals" id="interno"></div>
+      </section>
+    </div>
+  </div>
+
+  <!-- ================= GUARDADOS ================= -->
+  <section id="v-hist" class="panel" role="tabpanel" aria-labelledby="t-hist" hidden>
+    <h2>Presupuestos guardados</h2>
+    <p class="note intro">Cuando el cliente acepte, tocá "Aceptado", poné la fecha de entrega y el trabajo pasa a "Por entregar".</p>
+    <div id="hist"></div>
+  </section>
+
+  <!-- ================= POR ENTREGAR ================= -->
+  <div id="v-entregas" class="stack" role="tabpanel" aria-labelledby="t-entregas" hidden>
+    <section class="panel">
+      <div class="quote-head abajo"><h2>Por entregar</h2>
+        <label>Mes de entrega<select id="mes-ent"></select></label></div>
+      <div id="ent"></div>
+    </section>
+    <section class="panel">
+      <div class="quote-head abajo"><h2>Entregados</h2>
+        <label>Mes en que se entregó<select id="mes-ok"></select></label></div>
+      <div id="ent-ok"></div>
+    </section>
+  </div>
+
+  <!-- ================= LISTA DE PRECIOS ================= -->
+  <div id="v-precios" class="stack" role="tabpanel" aria-labelledby="t-precios" hidden>
+    <section class="panel">
+      <h2>Parámetros</h2>
+      <div class="fields" id="p-gen"></div>
+    </section>
+    <section class="panel">
+      <h2>Tipos de ventana</h2>
+      <div class="tabs" role="group" aria-label="Tipo de ventana a editar" id="p-lineas"></div>
+      <div class="actions base">
+        <label class="p-nombre">Nombre del tipo<input id="p-lnombre" autocomplete="off"></label>
+        <label class="p-desc">Descuento vidrio ancho (m)<input id="p-desca" data-desc="descA" type="text" inputmode="decimal" autocomplete="off" placeholder="0"></label>
+        <label class="p-desc">Descuento vidrio alto (m)<input id="p-desch" data-desc="descH" type="text" inputmode="decimal" autocomplete="off" placeholder="0"></label>
+        <label class="p-desc">Vidrio que usa<select id="p-vdef"></select></label>
+        <button class="btn ghost sm" id="p-ldup">Duplicar este tipo</button>
+        <button class="btn warn sm" id="p-ldel">Borrar este tipo</button>
+      </div>
+      <div class="confirm" id="p-ldel-conf" role="alertdialog" aria-labelledby="p-ldel-txt" hidden>
+        <span id="p-ldel-txt">¿Borrar este tipo de ventana con todos sus perfiles y accesorios?</span>
+        <button class="btn warn sm" id="p-ldel-si">Sí, borrar</button>
+        <button class="btn ghost sm" id="p-ldel-no">Cancelar</button>
+      </div>
+    </section>
+    <section class="panel">
+      <h2>Aluminio · <span id="p-lt1"></span></h2>
+      <div class="tbl-wrap">
+        <table class="edit">
+          <thead id="p-perf-head"></thead>
+          <tbody id="p-perf"></tbody>
+        </table>
+      </div>
+      <p class="note">Podés cambiar los kg por metro (o los kg de la barra entera: se calculan uno del otro) y el precio por kg de cada artículo en cada acabado. Si dejás vacío un precio, usa el precio general del acabado (en Parámetros, arriba). Debajo de cada precio ves cuánto sale el metro.</p>
+      <button class="btn ghost sm mas" id="add-perf">+ Agregar perfil</button>
+    </section>
+    <section class="panel">
+      <h2>Accesorios · <span id="p-lt2"></span></h2>
+      <div class="tbl-wrap">
+        <table class="edit">
+          <thead><tr><th>Artículo</th><th class="n">Precio U$S / unidad</th><th><span class="sr">Quitar</span></th></tr></thead>
+          <tbody id="p-acc"></tbody>
+        </table>
+      </div>
+      <button class="btn ghost sm mas" id="add-acc">+ Agregar accesorio</button>
+    </section>
+    <section class="panel">
+      <h2>Vidrios</h2>
+      <div class="tbl-wrap">
+        <table class="edit">
+          <thead><tr><th>Tipo de vidrio</th><th>Se cobra por</th><th class="n">Precio U$S</th><th><span class="sr">Quitar</span></th></tr></thead>
+          <tbody id="p-vid"></tbody>
+        </table>
+      </div>
+      <button class="btn ghost sm mas" id="add-vid">+ Agregar vidrio</button>
+    </section>
+    <div class="actions arriba"><button class="btn ghost" id="btn-reset-precios">Volver a los precios de la planilla</button></div>
+  </div>
+
+  <!-- ================= CONTROL DE GASTOS (se abre desde el menú) ================= -->
+  <div id="v-gastos" class="stack" aria-labelledby="g-h" hidden>
+    <section class="panel">
+      <h2 id="g-h" tabindex="-1">Control de gastos</h2>
+      <div class="saldos" id="saldos"></div>
+    </section>
+
+    <section class="panel" id="g-deudores">
+      <div class="quote-head abajo">
+        <div><h2>Deudores por ventas</h2><p class="note intro">Cada cliente que te debe es una cuenta. El total de arriba es la suma de todos.</p></div>
+      </div>
+      <div id="deudores"></div>
+      <div class="d-alta">
+        <label class="d-alta-n">Agregar deudor<input id="d-nuevo" autocomplete="off" placeholder="Nombre del cliente"></label>
+        <button class="btn ghost" id="d-agregar">＋ Agregar</button>
+      </div>
+    </section>
+
+    <section class="panel" id="g-form">
+      <h2>Nuevo movimiento</h2>
+      <div class="tabs tipo-mov" role="group" aria-label="Tipo de movimiento" id="g-tipo-mov">
+        <button class="tab" data-tipo="entrada" aria-pressed="true">Entra plata</button>
+        <button class="tab" data-tipo="salida" aria-pressed="false">Sale plata</button>
+        <button class="tab" data-tipo="pase" aria-pressed="false">Pasar de una a otra</button>
+      </div>
+      <p class="note intro" id="g-ayuda"></p>
+      <div class="moneda-fila">
+        <span class="moneda-et" id="g-moneda-et">Moneda</span>
+        <div class="tabs moneda" role="group" aria-labelledby="g-moneda-et" id="g-moneda">
+          <button class="tab" data-moneda="UYU" aria-pressed="true">$ Pesos</button>
+          <button class="tab" data-moneda="USD" aria-pressed="false">U$S Dólares</button>
+        </div>
+      </div>
+      <div class="fields">
+        <label id="g-desde-l">Sale de<select id="g-desde"></select></label>
+        <label id="g-hacia-l">Entra a<select id="g-hacia"></select></label>
+        <label id="g-nuevo-l" hidden>Nombre del deudor nuevo<input id="g-nuevo" autocomplete="off" placeholder="Ej: Juan Pérez"></label>
+        <label><span id="g-monto-et">Monto ($)</span><input id="g-monto" data-pesos type="text" inputmode="decimal" autocomplete="off" placeholder="0"></label>
+        <label>Fecha<input id="g-fecha" type="date"></label>
+        <label class="ancho-total">Descripción<input id="g-desc" autocomplete="off" placeholder="Ej: Compra de perfiles, seña de Pérez, sueldo…"></label>
+      </div>
+      <div class="actions">
+        <button class="btn" id="g-guardar">Guardar movimiento</button>
+      </div>
+      <p class="error" id="g-error" role="alert" hidden></p>
+    </section>
+
+    <section class="panel">
+      <div class="quote-head abajo"><h2>Movimientos</h2>
+        <label>Ver<select id="g-filtro"></select></label></div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Fecha</th><th>Descripción</th><th>Cuenta</th><th class="n col-uyu">Pesos ($)</th><th class="n col-usd">Dólares (U$S)</th><th><span class="sr">Borrar</span></th></tr></thead>
+          <tbody id="g-lista"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <!-- ================= AJUSTES Y COPIA ================= -->
+  <div id="v-backup" class="stack" role="tabpanel" aria-labelledby="t-backup" hidden>
+    <section class="panel">
+      <h2>Tus datos en el PDF</h2>
+      <p class="note intro">Esto aparece en el PDF del presupuesto que le mandás al cliente. Lo que dejes vacío no se muestra.</p>
+      <div class="fields anchos" id="empresa">
+        <label>Nombre del negocio<input data-emp="nombre" autocomplete="organization"></label>
+        <label>Teléfono / WhatsApp<input data-emp="tel" inputmode="tel" autocomplete="tel"></label>
+        <label>Dirección o ciudad<input data-emp="dir" autocomplete="street-address"></label>
+        <label>Email o RUT<input data-emp="extra" autocomplete="email"></label>
+        <label>Validez del presupuesto (días)<input data-emp="validez" type="text" inputmode="decimal" autocomplete="off"></label>
+        <label class="ancho-total">Especificaciones fijas (salen en todos los presupuestos, una por línea)<textarea data-emp="condiciones" placeholder="Ej: Forma de pago: 50% de seña y 50% al entregar"></textarea></label>
+      </div>
+    </section>
+    <section class="panel">
+      <h2>Copia de seguridad</h2>
+      <p class="note intro">Para pasar tus presupuestos y precios a otra compu, exportá la copia acá y abrila en la otra con "Importar copia".</p>
+      <div class="actions arriba">
+        <button class="btn" id="bk-exp">Exportar copia</button>
+        <button class="btn ghost" id="bk-imp-btn">Importar copia</button>
+        <input type="file" id="bk-imp" accept=".json,application/json" hidden>
+      </div>
+      <div class="confirm" id="bk-conf" role="alertdialog" aria-labelledby="bk-txt" hidden><span id="bk-txt"></span><button class="btn warn sm" id="bk-si">Sí, reemplazar</button><button class="btn ghost sm" id="bk-no">Cancelar</button></div>
+    </section>
+  </div>
+</div>
+
+<!-- ================= MENÚ LATERAL (se abre con ☰ arriba a la izquierda) ================= -->
+<div class="cajon-fondo" id="menu-fondo"></div>
+<nav class="cajon" id="menu-panel" aria-label="Menú" aria-hidden="true" inert>
+  <div class="cajon-cab">
+    <div class="logo">Alu<span>cast</span></div>
+    <button class="cajon-cerrar" id="menu-cerrar" aria-label="Cerrar menú">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+
+  <section class="cajon-sec">
+    <button class="sec-cab" id="m-presu-btn" aria-expanded="true" aria-controls="m-presu">
+      <span class="sec-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/></svg></span>
+      <span class="sec-txt"><span class="sec-t">Presupuestos</span><span class="sec-s">Elegí el tipo de abertura</span></span>
+      <span class="sec-chev" aria-hidden="true"></span>
+    </button>
+    <div class="sec-cuerpo" id="m-presu"></div>
+  </section>
+
+  <section class="cajon-sec">
+    <button class="sec-cab" id="m-gastos-btn" aria-expanded="true" aria-controls="m-gastos">
+      <span class="sec-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h15a3 3 0 0 1 3 3v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M3 7l12-3v3M16 14h2"/></svg></span>
+      <span class="sec-txt"><span class="sec-t">Control de gastos</span><span class="sec-s">Saldos al día</span></span>
+      <span class="sec-chev" aria-hidden="true"></span>
+    </button>
+    <div class="sec-cuerpo" id="m-gastos"></div>
+  </section>
+</nav>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+
+<script src="js/neutralino.js"></script>
+<script src="js/plataforma.js"></script>
+<script src="js/utilidades.js"></script>
+<script src="js/lista-fabrica.js"></script>
+<script src="js/datos.js"></script>
+<script src="js/calculo.js"></script>
+<script src="js/ventana.js"></script>
+<script src="js/presupuesto.js"></script>
+<script src="js/trabajos.js"></script>
+<script src="js/precios.js"></script>
+<script src="js/dolar.js"></script>
+<script src="js/copia.js"></script>
+<script src="js/jspdf.umd.min.js"></script>
+<script src="js/pdf.js"></script>
+<script src="js/gastos.js"></script>
+<script src="js/menu.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
