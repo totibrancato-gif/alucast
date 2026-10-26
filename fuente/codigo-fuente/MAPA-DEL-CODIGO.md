@@ -112,6 +112,7 @@ Todos se corren desde PowerShell en la PC, por ejemplo `powershell -ExecutionPol
   2. Después corre `aapt2` compile/link → `javac -source 8` → `d8` → `jar cfM0` → `zipalign` → `apksigner`.
 
   Usa `Android/herramientas/`: el JDK y el Android SDK con build-tools 34.0.0 y platform android-34. El paquete es `uy.alucast.presupuestos`, con minSdk 29 y target 34. `MainActivity.java` muestra la app en un WebView con un puente JS `AndroidApp` (`guardarPdf`, `guardarTexto`) que escribe en Descargas con MediaStore. "Importar copia" usa el selector de archivos del sistema.
+- **Web en la Mac: `armar-web.sh`** (`bash codigo-fuente/armar-web.sh`) hace lo mismo que `armar-web.ps1`.
 - **Web: `armar-web.ps1`**. Arma `..\Web\` con todos los archivos en una sola carpeta (sin subcarpetas). Cambia lo siguiente respecto de la versión de escritorio:
   - Saca `neutralino.js`.
   - Las tipografías se cargan de Google Fonts y jsPDF de cdnjs, con SRI.
