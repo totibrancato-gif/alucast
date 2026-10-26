@@ -145,7 +145,7 @@ function pintarAcabados(c) {
   acabados.forEach((a, j) => {
     fin.querySelectorAll('input[name="acabado"]')[j].checked = F.acabado === a;
     $("fa-" + j).textContent = `${c.k > 1 ? c.k + " ventanas" : "Ventana"} en ${a.toLowerCase()}`;
-    $("fp-" + j).textContent = pes(c.por[a].pesos);
+    $("fp-" + j).textContent = pes(porCantidad(c.por[a].pesos, c.k));
     $("fu-" + j).textContent = `U$S ${num(c.por[a].usd)}${c.k > 1 ? ` · ${pes(c.por[a].pesos / c.k)} c/u` : ""}`;
   });
   $("fin-resumen").textContent = `${c.k > 1 ? `Total de ${c.k} ventanas. ` : ""}Aluminio ${num(c.kg, 3)} kg · Accesorios U$S ${num(c.acc)} · Vidrio U$S ${num(c.vid)}` +
@@ -158,7 +158,7 @@ function anunciarPrecio(c) {
   clearTimeout(precioTimer);
   precioTimer = setTimeout(() => {
     const sel = c.por[F.acabado];
-    $("fin-vivo").textContent = sel ? `Precio de la ventana: ${pes(sel.pesos)}` : "";
+    $("fin-vivo").textContent = sel ? `Precio de la ventana: ${pes(porCantidad(sel.pesos, c.k))}` : "";
   }, 700);
 }
 

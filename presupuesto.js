@@ -82,7 +82,7 @@ function datosPresupuesto() {
   const c = cliente();
   return { num: numero, cli: c.nombre, tel: c.tel, fecha: c.fecha, fechaTxt: fechaTxt(),
            items: structuredClone(items), extras: structuredClone(extras),
-           especs: especs.filter(e => e.t.trim()).map(e => ({ t: e.t.trim() })), total: totals().total,
+           especs: especs.filter(e => e.t.trim()).map(e => ({ t: e.t.trim() })), total: preciosCliente("UYU").total, totalUsd: preciosCliente("USD").total,
            moneda: monedaPres, dolar: +P.dolar };
 }
 
