@@ -112,6 +112,8 @@ Todos se corren desde PowerShell en la PC, por ejemplo `powershell -ExecutionPol
   1. Copia `resources/` sin `neutralino.js` y saca la CSP de `index.html`.
   2. Después corre `aapt2` compile/link → `javac -source 8` → `d8` → `jar cfM0` → `zipalign` → `apksigner`.
 
+  **APK en la Mac: `armar-apk.sh`** (`bash otras-versiones/Android/armar-apk.sh`) hace lo mismo con Java y el SDK de `~/.local/share/alucast-android/` (`jdk/`, `sdk/build-tools/34.0.0`, `sdk/platforms/android-34`). No crea firmas: si falta `Android/firma/`, se frena.
+  **Firma nueva desde el 26/10/2026**: la de la PC no se encontró, así que se creó otra en la Mac (huella SHA-256 `4ef643b2…b337`; copia en `~/Documents/Alucast-FIRMA-ANDROID`). Para armar el APK en la PC, primero copiar esa firma a `Android\firma\`: si no, `armar-apk.ps1` crea otra y la tablet no acepta la actualización.
   Usa `Android/herramientas/`: el JDK y el Android SDK con build-tools 34.0.0 y platform android-34. El paquete es `uy.alucast.presupuestos`, con minSdk 29 y target 34. `MainActivity.java` muestra la app en un WebView con un puente JS `AndroidApp` (`guardarPdf`, `guardarTexto`) que escribe en Descargas con MediaStore. "Importar copia" usa el selector de archivos del sistema.
 - **Web en la Mac: `armar-web.sh`** (`bash codigo-fuente/armar-web.sh`) hace lo mismo que `armar-web.ps1`.
 - **`resources.neu` en la Mac: `empaquetar.sh`** (`bash codigo-fuente/empaquetar.sh`) hace lo mismo que `empaquetar.ps1`. Para actualizar la app de la Mac: cerrarla, copiar `resources.neu` en `Alucast.app/Contents/Resources/` y en `Contents/MacOS/`, y correr `xattr -cr /Applications/Alucast.app`. Los datos se conservan (mismo `applicationId` y puerto). `resources.neu` no se sube a git.
