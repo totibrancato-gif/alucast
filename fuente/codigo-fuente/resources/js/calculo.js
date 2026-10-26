@@ -23,6 +23,8 @@ const vidrioPorUnidad = tipo => !!(P.vidrios || []).find(x => x.n === tipo)?.uni
 const accUsd = (n, lin) => L(lin).accesorios.find(a => a.n === n)?.usd ?? 0;
 /** Cantidad de ventanas iguales (mínimo 1). */
 const cantV = v => Math.max(1, parseInt(v.cant) || 1);
+/** Total de k ventanas iguales: el precio de una, redondeado, por la cantidad (así "c/u × k" da justo). */
+const porCantidad = (total, k) => Math.round(total / k) * k;
 
 /**
  * Una fila de aluminio. k = cantidad de ventanas.
@@ -78,14 +80,17 @@ function totals() {
 
 /**
  * Precio de cada ventana para el cliente: materiales + su parte de la mano de
- * obra (proporcional), redondeado y cuadrado para que sume justo el total.
+ * obra y extras del presupuesto (proporcional). Se redondea el precio de UNA
+ * ventana y la fila es ese precio × la cantidad, así "c/u × cantidad" da justo
+ * y cada fila coincide con el precio del formulario. El total es la suma de las filas.
  * En la moneda del presupuesto: pesos, o dólares (todo pasado al dólar cargado).
  */
 function preciosCliente(moneda = monedaPres) {
   const f = moneda === "USD" ? 1 / (+P.dolar || 1) : 1;
   const t = totals(), base = items.map(it => calc(it).pesos);
-  const out = base.map(p => Math.round((t.v > 0 ? p + t.e * p / t.v : p + (items.length ? t.e / items.length : 0)) * f));
-  const total = Math.round(t.total * f);
-  if (out.length) out[out.length - 1] += total - out.reduce((s, x) => s + x, 0);
+  const out = base.map((p, i) =>
+    porCantidad((t.v > 0 ? p + t.e * p / t.v : p + (items.length ? t.e / items.length : 0)) * f, cantV(items[i])));
+  // El total es la suma de las filas: ninguna ventana se toca para "cuadrar" el redondeo.
+  const total = out.length ? out.reduce((s, x) => s + x, 0) : Math.round(t.total * f);
   return { out, total, moneda };
 }

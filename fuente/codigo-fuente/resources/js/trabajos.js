@@ -29,8 +29,11 @@ const confAbrir = q => abriendo !== q.num ? "" : `<div class="acept" role="alert
     <button class="btn ghost sm" data-cancel="1">Cancelar</button>
   </div>`;
 
-/** Total del presupuesto en la moneda en que se le pasó al cliente (en dólares, con el dólar de ese día). */
-const totalEnSuMoneda = q => q.moneda === "USD" && q.dolar > 0 ? Math.round(q.total / q.dolar) : q.total;
+/**
+ * Total del presupuesto en la moneda en que se le pasó al cliente (en dólares, con el dólar de ese día).
+ * En dólares usa el total que vio el cliente (totalUsd); los guardados antes no lo tienen y se recalcula.
+ */
+const totalEnSuMoneda = q => q.moneda === "USD" && q.dolar > 0 ? (+q.totalUsd || Math.round(q.total / q.dolar)) : q.total;
 
 function cabecera(q) {
   return `<div><b>${nro(q.num)}</b> · ${esc(q.cli || "Sin nombre")}${q.tel ? ` · ${esc(q.tel)}` : ""}
