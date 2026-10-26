@@ -65,11 +65,12 @@ Son **scripts clásicos (no módulos)** que comparten el ámbito global y se car
 | 14 | `pdf.js` | Arma el PDF del presupuesto con jsPDF: encabezado, cliente, tabla (con P. unitario si hay cantidad > 1), total, especificaciones, validez, mensaje de cierre y contacto |
 | 15 | `gastos.js` | Control de gastos: cuentas fijas (caja chica, banco), deudores (una cuenta cada uno), movimientos desde/hacia con moneda, saldos en dos columnas |
 | 16 | `menu.js` | Menú lateral (arriba a la izquierda): tipos de presupuesto y cuentas de gastos |
-| 17 | `app.js` | Arranque: pestañas, carga del borrador o del ejemplo, `iniciar()` |
+| 17 | `nube.js` | **Nube (Supabase)**: pantalla de inicio de sesión, sesión guardada, y sincronización registro por registro con la tabla `registros` (ver sección 8). `save()` le avisa con `nubeCambio()` |
+| 18 | `app.js` | Arranque: pestañas, carga del borrador o del ejemplo, `iniciar()` |
 
-## 3. Dónde se guardan los datos hoy
+## 3. Dónde se guardan los datos
 
-**Todo está en `localStorage` del WebView/navegador.** No hay base de datos ni servidor, y no se usan archivos de Neutralino para los datos. Cada dispositivo tiene sus propios datos, y la única forma de pasarlos de uno a otro es *Exportar/Importar copia*.
+**Todo está en `localStorage` del WebView/navegador, y se sincroniza con Supabase** (ver sección 8) cuando hay sesión iniciada y conexión. No se usan archivos de Neutralino para los datos. *Exportar/Importar copia* sigue funcionando como respaldo.
 
 | Clave (`CLAVES.*`) | Valor en localStorage | Qué guarda |
 |---|---|---|
@@ -161,9 +162,14 @@ Es un documento con instrucciones y el **contenido completo de cada archivo de `
 
 No hay `node_modules`, `dist` ni carpeta `bin`: el proyecto no usa npm.
 
-## 8. Cosas a tener en cuenta para Supabase
+## 8. Nube (Supabase)
 
-- La app hoy guarda todo en `localStorage` mediante `load()`/`save()` (`utilidades.js`), que son los dos puntos únicos de lectura y escritura. Las claves están en `CLAVES` (`datos.js`).
-- Al sumar un servidor remoto (por ejemplo, `https://<proyecto>.supabase.co`) hay que ampliar la **CSP** de `index.html` (`connect-src`), en la versión de escritorio y en la web (`armar-web.ps1`).
-- Los datos actuales se pueden migrar a partir de una copia `.json` exportada (formato de la sección 3).
+- **Proyecto**: `https://joedpfvixhxbegdtgpky.supabase.co`, región Américas. La URL y la clave pública (`sb_publishable_…`) están en `NUBE`, arriba de `js/nube.js`. La clave pública puede ir en el código: lo que protege los datos son las reglas (RLS) de la base. **Nunca** poner la clave secreta ni la contraseña de la base en la app.
+- **Tablas** (`fuente/supabase/1-tablas.sql`, ya corrido): `empresas`, `miembros` (usuario → empresa) y `registros` (`empresa_id`, `tipo`, `id`, `datos` jsonb, `borrado`, `actualizado`). Cada usuario solo ve y cambia los registros de su empresa. La fecha `actualizado` la pone el servidor.
+- **Usuarios**: el registro público está apagado. Se crean en *Authentication → Users → Add user* y se suman a la empresa con `fuente/supabase/2-empresa-y-usuarios.sql` (parte 2).
+- **Qué se sincroniza**: cada presupuesto (`tipo` presupuesto, id = número), cada movimiento y cada deudor (por su id), y como `ajuste` la lista de precios, los datos de la empresa y el último número (que nunca baja). El borrador y las marcas de migración quedan solo en cada equipo. Lo borrado queda con `borrado = true`.
+- **Cómo**: `localStorage` sigue siendo la copia de trabajo (la app anda sin internet). `nube.js` guarda en `alucast-nube` una huella de cada registro tal como está en la nube; al sincronizar baja lo cambiado en la nube desde la última vez, después sube lo que cambió acá. Si el mismo registro cambió en los dos lados, gana el de la nube. Sincroniza 1,5 s después de guardar, cada 30 s, al volver a la app y al volver internet.
+- **Primera vez en un equipo**: guarda una copia de lo que había en `alucast-copia-antes-de-nube` (por si un presupuesto local tenía el mismo número que uno de la nube) y después junta lo de la nube con lo local.
+- **Migrar los datos viejos**: entrar con la cuenta en la PC y usar *Importar copia* con el `.json`: lo importado se sube solo.
+- **CSP**: `connect-src` de `index.html` incluye la URL del proyecto (la web la hereda de ahí). Android necesita el permiso `INTERNET` (ya está en `AndroidManifest.xml`). Neutralino no necesita permisos nuevos: los pedidos son `fetch` comunes.
 - No usar `NL_OS` para nada que deba funcionar en la web o en Android, y mantener la rama `window.AndroidApp` de `plataforma.js`.

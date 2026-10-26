@@ -50,7 +50,7 @@ function prepararImport(texto) {
     copiaPendiente = o;
     const n = (o.datos[CLAVES.historial] || []).length;
     const g = (o.datos[CLAVES.gastos] || []).length;
-    $("bk-txt").textContent = `La copia tiene ${n} presupuesto(s) guardado(s)${g ? ` y ${g} movimiento(s) de gastos` : ""}, del ${dmy(String(o.exportado).slice(0, 10))}. Va a reemplazar todo lo de esta compu.`;
+    $("bk-txt").textContent = `La copia tiene ${n} presupuesto(s) guardado(s)${g ? ` y ${g} movimiento(s) de gastos` : ""}, del ${dmy(String(o.exportado).slice(0, 10))}. Va a reemplazar todo lo de esta compu y de la nube (se ve en todos tus equipos).`;
     $("bk-conf").hidden = false;
     $("bk-no").focus();
   } catch (err) {

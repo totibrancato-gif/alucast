@@ -2,6 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="uy.alucast.presupuestos">
 
+    <!-- Para sincronizar con la nube (Supabase) -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <application
         android:label="Alucast"
         android:icon="@drawable/ic_launcher"

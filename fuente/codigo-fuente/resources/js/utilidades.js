@@ -78,14 +78,15 @@ function sumarDias(v, dias) {
   return fechaISO(d);
 }
 
-// ---- Guardado local (queda en la compu, dentro de la app) ----
+// ---- Guardado local (queda en la compu, dentro de la app; nube.js lo sincroniza) ----
 function load(clave, porDefecto) {
   try { const v = localStorage.getItem(clave); return v ? JSON.parse(v) : porDefecto; }
   catch (e) { return porDefecto; }
 }
 function save(clave, valor) {
   try { localStorage.setItem(clave, JSON.stringify(valor)); }
-  catch (e) { toast("No se pudo guardar en esta compu"); }
+  catch (e) { toast("No se pudo guardar en esta compu"); return; }
+  if (typeof nubeCambio === "function") nubeCambio(clave);
 }
 
 // ---- Avisos ----

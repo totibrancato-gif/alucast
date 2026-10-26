@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <!-- Seguridad: solo se ejecuta el código de la propia app (nada de afuera ni insertado en la página) -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' ws: http://127.0.0.1:* http://localhost:*; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' ws: http://127.0.0.1:* http://localhost:* https://joedpfvixhxbegdtgpky.supabase.co; object-src 'none'; base-uri 'none'; form-action 'none'">
   <meta name="theme-color" content="#1d5a86">
   <title>Presupuestos Alucast</title>
   <link rel="icon" type="image/png" href="icon-512.png">
@@ -319,6 +319,18 @@
   <!-- ================= AJUSTES Y COPIA ================= -->
   <div id="v-backup" class="stack" role="tabpanel" aria-labelledby="t-backup" hidden>
     <section class="panel">
+      <h2>Tu cuenta</h2>
+      <p class="note intro">Tus presupuestos, precios y gastos se guardan en la nube y se ven igual en la compu, la Mac, la tablet y la web. Sin internet seguís trabajando y se sincroniza cuando vuelve la conexión.</p>
+      <div class="nube-fila">
+        <div><span class="nube-et">Entraste como</span> <b id="nube-email">—</b></div>
+        <div class="nube-estado" id="nube-estado" aria-live="polite"></div>
+      </div>
+      <div class="actions arriba">
+        <button class="btn ghost" id="nube-ahora">Sincronizar ahora</button>
+        <button class="btn warn sm" id="nube-salir">Cerrar sesión</button>
+      </div>
+    </section>
+    <section class="panel">
       <h2>Tus datos en el PDF</h2>
       <p class="note intro">Esto aparece en el PDF del presupuesto que le mandás al cliente. Lo que dejes vacío no se muestra.</p>
       <div class="fields anchos" id="empresa">
@@ -374,6 +386,19 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+<!-- ================= INICIO DE SESIÓN (tapa la app hasta que entrás) ================= -->
+<div class="login" id="login" role="dialog" aria-modal="true" aria-labelledby="login-h" hidden>
+  <form class="login-caja panel" id="login-form" novalidate>
+    <div class="logo">Alu<span>cast</span></div>
+    <h2 id="login-h">Entrar</h2>
+    <p class="note intro">Con el correo y la contraseña de tu usuario de Alucast.</p>
+    <label>Correo<input id="login-email" type="email" autocomplete="username" inputmode="email"></label>
+    <label>Contraseña<input id="login-clave" type="password" autocomplete="current-password"></label>
+    <button class="btn" id="login-entrar" type="submit">Entrar</button>
+    <p class="error" id="login-error" role="alert" hidden></p>
+  </form>
+</div>
+
 
 <script src="js/neutralino.js"></script>
 <script src="js/plataforma.js"></script>
@@ -391,6 +416,7 @@
 <script src="js/pdf.js"></script>
 <script src="js/gastos.js"></script>
 <script src="js/menu.js"></script>
+<script src="js/nube.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

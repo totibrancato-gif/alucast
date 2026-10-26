@@ -383,6 +383,19 @@ td.empty { border: 1px dashed var(--line); }
 @media (prefers-reduced-motion: reduce) { .toast, .btn, .tab, .x { transition: none; } }
 .confirm { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; background: var(--sunk); padding: 10px; border-radius: 4px; margin-top: 10px; border-left: 3px solid var(--danger); }
 .confirm.arriba { margin: 0 0 10px; border-left-color: var(--accent); }
+
+/* ---- Inicio de sesión y cuenta (nube) ---- */
+.login { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; padding: 16px; background: var(--bg); overflow-y: auto; }
+.login-caja { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 12px; }
+.login-caja .logo { text-align: center; margin-bottom: 4px; }
+.login-caja h2 { margin: 0; }
+.login-caja .note.intro { margin: 0; }
+.login-caja .btn { margin-top: 4px; }
+.login-caja .error { margin: 0; }
+.nube-fila { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: baseline; justify-content: space-between; }
+.nube-et { color: var(--muted); font-size: .85rem; }
+.nube-estado { color: var(--muted); font-size: .9rem; }
+.nube-estado.nube-mal { color: var(--danger); font-weight: 600; }
 .hist-item { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; padding: 12px 0; border-bottom: 1px solid var(--line); }
 .hist-item:last-child { border-bottom: none; }
 .hist-item .der { text-align: right; }
