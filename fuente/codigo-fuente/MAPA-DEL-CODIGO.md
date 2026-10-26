@@ -20,6 +20,7 @@ Todos los scripts son PowerShell 5.1 (Windows) y están guardados en **UTF-8 con
 codigo-fuente/
   neutralino.config.json      configuración del programa de escritorio (ver sección 5)
   empaquetar.ps1              arma resources.neu (Windows/Mac)
+  empaquetar.sh               lo mismo, desde la Mac
   armar-web.ps1               arma la carpeta Web/ (GitHub Pages)
   armar-instrucciones-github.ps1  genera PARA-CLAUDE-GITHUB.md a partir de Web/
   armar-prueba.ps1            genera Prueba/alucast-prueba.html (link de prueba)
@@ -113,6 +114,7 @@ Todos se corren desde PowerShell en la PC, por ejemplo `powershell -ExecutionPol
 
   Usa `Android/herramientas/`: el JDK y el Android SDK con build-tools 34.0.0 y platform android-34. El paquete es `uy.alucast.presupuestos`, con minSdk 29 y target 34. `MainActivity.java` muestra la app en un WebView con un puente JS `AndroidApp` (`guardarPdf`, `guardarTexto`) que escribe en Descargas con MediaStore. "Importar copia" usa el selector de archivos del sistema.
 - **Web en la Mac: `armar-web.sh`** (`bash codigo-fuente/armar-web.sh`) hace lo mismo que `armar-web.ps1`.
+- **`resources.neu` en la Mac: `empaquetar.sh`** (`bash codigo-fuente/empaquetar.sh`) hace lo mismo que `empaquetar.ps1`. Para actualizar la app de la Mac: cerrarla, copiar `resources.neu` en `Alucast.app/Contents/Resources/` y en `Contents/MacOS/`, y correr `xattr -cr /Applications/Alucast.app`. Los datos se conservan (mismo `applicationId` y puerto). `resources.neu` no se sube a git.
 - **Web: `armar-web.ps1`**. Arma `..\Web\` con todos los archivos en una sola carpeta (sin subcarpetas). Cambia lo siguiente respecto de la versión de escritorio:
   - Saca `neutralino.js`.
   - Las tipografías se cargan de Google Fonts y jsPDF de cdnjs, con SRI.
