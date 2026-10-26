@@ -298,6 +298,11 @@ $("nube-salir").onclick = async () => {
   cerrarSesionLocal();
 };
 $("nube-ahora").onclick = async () => { if (await sincronizar()) toast("Sincronizado"); };
+// La copia de antes de la primera sincronización se recupera con el mismo aviso de "Importar copia"
+$("nube-recuperar").onclick = () => {
+  const c = load(CLAVE_RESPALDO, null);
+  if (c) prepararImport(JSON.stringify(c));
+};
 
 /** Estado de la cuenta en "Ajustes y copia". */
 function pintarNube() {
@@ -306,6 +311,7 @@ function pintarNube() {
   const hora = nubeUltimaOk ? nubeUltimaOk.toLocaleTimeString("es-UY", { hour: "2-digit", minute: "2-digit" }) : "";
   $("nube-estado").textContent = !s ? "Sin sesión" : nubeCorriendo ? "Sincronizando…" : nubeError || (hora ? `Sincronizado a las ${hora}` : "Todavía no se sincronizó");
   $("nube-estado").classList.toggle("nube-mal", !!(s && nubeError));
+  $("nube-respaldo").hidden = !load(CLAVE_RESPALDO, null);
 }
 
 // ---- Arranque ----
