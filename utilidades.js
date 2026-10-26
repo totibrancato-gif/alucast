@@ -45,6 +45,8 @@ document.addEventListener("input", e => {
 
 /** Pesos uruguayos redondeados: "$ 12.345". */
 const pes = n => "$ " + Math.round(+n || 0).toLocaleString("es-UY");
+/** Importe en la moneda del presupuesto: "$ 12.345" o "U$S 301" (redondeado). */
+const dinero = (n, moneda) => (moneda === "USD" ? "U$S " : "$ ") + Math.round(+n || 0).toLocaleString("es-UY");
 /** Número con decimales fijos: "1.234,50". */
 const num = (n, d = 2) => (+n || 0).toLocaleString("es-UY", { minimumFractionDigits: d, maximumFractionDigits: d });
 /** Número de presupuesto: "N.º 0012" (siempre un entero, aunque venga mal guardado). */
@@ -76,14 +78,15 @@ function sumarDias(v, dias) {
   return fechaISO(d);
 }
 
-// ---- Guardado local (queda en la compu, dentro de la app) ----
+// ---- Guardado local (queda en la compu, dentro de la app; nube.js lo sincroniza) ----
 function load(clave, porDefecto) {
   try { const v = localStorage.getItem(clave); return v ? JSON.parse(v) : porDefecto; }
   catch (e) { return porDefecto; }
 }
 function save(clave, valor) {
   try { localStorage.setItem(clave, JSON.stringify(valor)); }
-  catch (e) { toast("No se pudo guardar en esta compu"); }
+  catch (e) { toast("No se pudo guardar en esta compu"); return; }
+  if (typeof nubeCambio === "function") nubeCambio(clave);
 }
 
 // ---- Avisos ----

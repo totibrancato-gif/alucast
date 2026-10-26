@@ -34,6 +34,8 @@ function renderPrecios() {
   $("p-lnombre").value = LN ? LN.n : "";
   $("p-desca").value = LN?.descA ?? "";
   $("p-desch").value = LN?.descH ?? "";
+  $("p-vdef").innerHTML = `<option value="">4 mm (el de siempre)</option>` +
+    (P.vidrios || []).map(g => `<option${LN?.vidrioDef === g.n ? " selected" : ""}>${esc(g.n)}</option>`).join("");
   $("p-lt1").textContent = $("p-lt2").textContent = LN ? LN.n : "";
   $("p-ldel-conf").hidden = true;
 
@@ -63,7 +65,11 @@ function renderPrecios() {
 function renderVidrios() {
   $("p-vid").innerHTML = (P.vidrios || []).map((g, i) => `<tr>
       <td><input data-gv="${i}" data-f="n" value="${esc(g.n)}" aria-label="Nombre del vidrio ${i + 1}"></td>
-      <td class="n">${campoNum(`data-gv="${i}" data-f="usd"`, g.usd, ` aria-label="Precio en U$S por m² de ${esc(g.n)}"`)}</td>
+      <td><select data-gvu="${i}" aria-label="Cómo se cobra ${esc(g.n)}">
+        <option value="m2"${g.unidad ? "" : " selected"}>m²</option>
+        <option value="unidad"${g.unidad ? " selected" : ""}>Unidad</option>
+      </select></td>
+      <td class="n">${campoNum(`data-gv="${i}" data-f="usd"`, g.usd, ` aria-label="Precio en U$S ${g.unidad ? "por unidad" : "por m²"} de ${esc(g.n)}"`)}<div class="d">${g.unidad ? "por unidad" : "por m²"}</div></td>
       <td><button class="x" data-gvdel="${i}" aria-label="Quitar ${esc(g.n)}">×</button></td>
     </tr>`).join("");
 }
@@ -144,6 +150,20 @@ $("v-precios").addEventListener("input", e => {
     render();
     return;
   }
+  if (el.id === "p-vdef") {
+    // Vidrio que arranca elegido al cargar una ventana de este tipo
+    const LN = P.lineas[PL];
+    if (el.value) LN.vidrioDef = el.value; else delete LN.vidrioDef;
+    save(CLAVES.lista, P);
+    toast(`${LN.n}: arranca con ${el.value || "4 mm"}`);
+    return;
+  }
+  if (d.gvu !== undefined) {
+    const g = P.vidrios[+d.gvu];
+    if (el.value === "unidad") g.unidad = true; else delete g.unidad;
+    guardarPrecios(true);
+    return;
+  }
   if (d.cb) {
     P.cobrarBarra = el.value === "1";
   } else if (d.g) {
@@ -176,6 +196,7 @@ $("v-precios").addEventListener("input", e => {
       marcar(el, "");
       const viejo = g.n;
       paraTodasLasVentanas(x => { if (x.vid && x.vid.tipo === viejo) x.vid.tipo = v; });
+      P.lineas.forEach(l => { if (l.vidrioDef === viejo) l.vidrioDef = v; });
       g.n = v;
     } else {
       g.usd = +el.value || 0;
@@ -233,6 +254,18 @@ $("v-precios").addEventListener("click", e => {
     $("p-lnombre").select();
     return;
   }
+  if (id === "p-ldup") {
+    // Copia exacta del tipo elegido (perfiles, accesorios, precios y descuentos) con nombre "… 2", "… 3", etc.
+    let k = 2;
+    while (P.lineas.some(l => l.n === `${LN.n} ${k}`)) k++;
+    P.lineas.splice(PL + 1, 0, { ...structuredClone(LN), n: `${LN.n} ${k}` });
+    PL = PL + 1;
+    guardarPrecios(true);
+    toast(`Creado "${P.lineas[PL].n}" igual a "${LN.n}"`);
+    $("p-lnombre").focus();
+    $("p-lnombre").select();
+    return;
+  }
   if (id === "p-ldel") {
     if (P.lineas.length < 2) { toast("Tiene que quedar al menos una línea"); return; }
     if (enUso(ventanasQue(v => v.linea === LN.n), `"${LN.n}"`)) return;
@@ -269,6 +302,7 @@ $("v-precios").addEventListener("click", e => {
     const g = P.vidrios[+d.gvdel];
     if (enUso(ventanasQue(v => v.vid.tipo === g.n && +v.vid.cant), `"${g.n}"`)) return;
     P.vidrios.splice(+d.gvdel, 1);
+    P.lineas.forEach(l => { if (l.vidrioDef === g.n) delete l.vidrioDef; });
     guardarPrecios(true);
     $("add-vid").focus();
   }

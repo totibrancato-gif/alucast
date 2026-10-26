@@ -16,8 +16,8 @@ $("empresa").addEventListener("input", e => {
 
 // ---- Copia de seguridad ----
 // Incluye las marcas de actualización para que, al importar, no se vuelva a pisar la lista de precios.
-const CLAVES_COPIA = [CLAVES.lista, CLAVES.historial, CLAVES.numero, CLAVES.borrador, CLAVES.empresa,
-  "alucast-precios-2026-10-12", "alucast-num-2345", "alucast-num-2345-v2", "alucast-dolar-fijo", "alucast-empresa-contacto"];
+const CLAVES_COPIA = [CLAVES.lista, CLAVES.historial, CLAVES.numero, CLAVES.borrador, CLAVES.empresa, CLAVES.gastos, CLAVES.deudores,
+  "alucast-precios-2026-10-12", "alucast-num-2345", "alucast-num-2345-v2", "alucast-dolar-fijo", "alucast-empresa-contacto", "alucast-probba2", "alucast-acrilico", VERSION_LISTA, "alucast-acrilico-v2"];
 let copiaPendiente = null;
 
 $("bk-exp").onclick = () => {
@@ -29,8 +29,8 @@ $("bk-exp").onclick = () => {
 
   if (window.alucast?.guardarArchivo) {
     window.alucast.guardarArchivo(nombre, texto)
-      .then(ok => { if (ok) toast("Copia exportada"); })
-      .catch(() => toast("No se pudo guardar la copia"));
+      .then(ok => { if (ok) toast(ok === "Descargas" ? `Copia guardada en Descargas: ${nombre}` : "Copia exportada"); })
+      .catch(e => toast("No se pudo guardar la copia (" + ([e?.code, e?.message].filter(Boolean).join(": ") || e) + ")"));
     return;
   }
   const a = document.createElement("a");
@@ -49,7 +49,8 @@ function prepararImport(texto) {
     if (o.app !== "alucast" || !o.datos) throw new Error("no es copia");
     copiaPendiente = o;
     const n = (o.datos[CLAVES.historial] || []).length;
-    $("bk-txt").textContent = `La copia tiene ${n} presupuesto(s) guardado(s), del ${dmy(String(o.exportado).slice(0, 10))}. Va a reemplazar todo lo de esta compu.`;
+    const g = (o.datos[CLAVES.gastos] || []).length;
+    $("bk-txt").textContent = `La copia tiene ${n} presupuesto(s) guardado(s)${g ? ` y ${g} movimiento(s) de gastos` : ""}, del ${dmy(String(o.exportado).slice(0, 10))}. Va a reemplazar todo lo de esta compu y de la nube (se ve en todos tus equipos).`;
     $("bk-conf").hidden = false;
     $("bk-no").focus();
   } catch (err) {
@@ -82,12 +83,21 @@ function limpiarCopia(datos) {
     const v = datos[k];
     if (k === CLAVES.historial) limpio[k] = (Array.isArray(v) ? v : []).filter(q => q && typeof q === "object").map(normalizarPresupuesto).filter(q => q.num > 0);
     else if (k === CLAVES.numero) limpio[k] = parseInt(v) || NUMERO_INICIAL;
+    else if (k === CLAVES.deudores) limpio[k] = normalizarDeudores(v);
+    else if (k === CLAVES.gastos) {
+      // Los movimientos se validan contra los deudores de la copia (más la cuenta vieja "En la calle")
+      const deu = normalizarDeudores(datos[CLAVES.deudores] ?? load(CLAVES.deudores, []));
+      const validas = new Set([...idsCuentas(deu), DEUDOR_VIEJO.id]);
+      limpio[k] = (Array.isArray(v) ? v : []).map(m => normalizarMov(m, validas)).filter(Boolean);
+    }
     else if (k === CLAVES.lista) { if (v && typeof v === "object" && !Array.isArray(v)) limpio[k] = v; }
     else if (k === CLAVES.empresa) { if (v && typeof v === "object") limpio[k] = Object.fromEntries(Object.keys(EMPRESA_DEF).map(c => [c, texto(v[c])])); }
     else if (k === CLAVES.borrador) {
       if (v && typeof v === "object") limpio[k] = {
         items: (Array.isArray(v.items) ? v.items : []).map(normalizarItem),
         extras: (Array.isArray(v.extras) ? v.extras : []).filter(x => x && typeof x === "object").map(x => ({ c: texto(x.c), monto: texto(String(x.monto ?? "")) })),
+        especs: normalizarEspecs(v.especs),
+        monedaPres: v.monedaPres === "USD" ? "USD" : "UYU",
         F: v.F ? normalizarItem(v.F) : null, editIdx: -1,
         numero: parseInt(v.numero) || undefined,
         cli: (Array.isArray(v.cli) ? v.cli : []).slice(0, 3).map(texto),

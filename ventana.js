@@ -120,7 +120,9 @@ function updateForm() {
   });
 
   const c = calc(F);
-  $("g-m2").value = num(c.m2);
+  // Vidrio por unidad (acrílico): se muestra cuántas piezas se cobran en vez de los m²
+  $("g-m2-et").textContent = c.porUnidad ? "Se cobran" : "M² totales";
+  $("g-m2").value = c.porUnidad ? `${num(c.unidades, 0)} unid. × U$S ${num(precioVidrio(F.vid.tipo))}` : num(c.m2);
   pintarAcabados(c);
   $("ab-head").textContent = k > 1 ? `Barras (${k} vent.)` : "Barras";
   anunciarPrecio(c);
@@ -229,10 +231,15 @@ $("lineas").onclick = e => {
   const n = e.target.dataset.lin;
   if (n === undefined || n === F.linea) return;
   const nuevo = blank(n);
-  nuevo.nombre = F.nombre; nuevo.acabado = F.acabado; nuevo.vid = F.vid;
+  nuevo.nombre = F.nombre; nuevo.acabado = F.acabado;
+  // Se conservan las medidas del vidrio. El tipo pasa al propio de la nueva línea si tiene uno (Mampara → Acrílico);
+  // si el que había era el automático de la línea anterior, vuelve al de siempre (así Probba no queda con acrílico).
+  const propio = L(n).vidrioDef, anterior = L(F.linea).vidrioDef;
+  const tipo = propio && P.vidrios.some(g => g.n === propio) ? propio
+    : (anterior && F.vid.tipo === anterior) ? vidrioPorDefecto(n) : F.vid.tipo;
+  nuevo.vid = { ...F.vid, tipo };
   nuevo.cant = F.cant; nuevo.ancho = F.ancho; nuevo.alto = F.alto;
-  nuevo.mo = F.mo; nuevo.exs = F.exs; nuevo.vidManual = F.vidManual;
-  F = nuevo;
+  nuevo.mo = F.mo; nuevo.exs = F.exs; nuevo.vidManual = F.vidManual;  F = nuevo;
   if (!F.vidManual) vidAuto(); // cada tipo de ventana tiene su propio descuento
   renderForm();
   $("lineas").querySelector('[aria-pressed="true"]')?.focus();

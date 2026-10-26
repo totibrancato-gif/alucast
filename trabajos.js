@@ -29,9 +29,12 @@ const confAbrir = q => abriendo !== q.num ? "" : `<div class="acept" role="alert
     <button class="btn ghost sm" data-cancel="1">Cancelar</button>
   </div>`;
 
+/** Total del presupuesto en la moneda en que se le pasó al cliente (en dólares, con el dólar de ese día). */
+const totalEnSuMoneda = q => q.moneda === "USD" && q.dolar > 0 ? Math.round(q.total / q.dolar) : q.total;
+
 function cabecera(q) {
   return `<div><b>${nro(q.num)}</b> · ${esc(q.cli || "Sin nombre")}${q.tel ? ` · ${esc(q.tel)}` : ""}
-    <div class="muted">${esc(q.fechaTxt)} · ${q.items.length} ventana(s) · <b class="monto">${pes(q.total)}</b></div></div>`;
+    <div class="muted">${esc(q.fechaTxt)} · ${q.items.length} ventana(s) · <b class="monto">${dinero(totalEnSuMoneda(q), q.moneda === "USD" && q.dolar > 0 ? "USD" : "UYU")}</b></div></div>`;
 }
 
 function formFecha(q, modo) {
@@ -66,8 +69,14 @@ function selMes(id, lista, campo, actual) {
   return actual;
 }
 const enMes = (q, campo, mes) => !mes || (mes === "sin" ? !q[campo] : (q[campo] || "").startsWith(mes));
-const resumenMes = (lista, mes) => lista.length && mes
-  ? `<p class="note intro">${lista.length} trabajo(s) · ${pes(lista.reduce((s, q) => s + (q.total || 0), 0))}</p>` : "";
+/** Cantidad de trabajos y la suma del mes: pesos y dólares por separado (no se mezclan). */
+function resumenMes(lista, mes) {
+  if (!lista.length || !mes) return "";
+  const enUsd = q => q.moneda === "USD" && q.dolar > 0;
+  const pesos = lista.filter(q => !enUsd(q)).reduce((s, q) => s + (q.total || 0), 0);
+  const dolares = lista.filter(enUsd).reduce((s, q) => s + totalEnSuMoneda(q), 0);
+  return `<p class="note intro">${lista.length} trabajo(s)${pesos ? " · " + pes(pesos) : ""}${dolares ? " · " + dinero(dolares, "USD") : ""}</p>`;
+}
 
 function chipEntrega(q) {
   if (!q.entrega) return `<span class="chip">Sin fecha</span>`;
@@ -198,12 +207,15 @@ function abrir(n) {
   numero = q.num;
   items = q.items; // ya vienen completas (normalizarPresupuesto)
   extras = q.extras;
+  especs = q.especs;
+  monedaPres = q.moneda;
   $("c-nombre").value = q.cli;
   $("c-tel").value = q.tel;
   $("c-fecha").value = q.fecha || hoy();
   editIdx = -1;
   F = blank();
   renderExtras();
+  renderEspecs();
   renderForm();
   show("presu");
   render();

@@ -22,6 +22,14 @@ function renderExtras() {
     </div>`).join("");
 }
 
+/** Especificaciones de este presupuesto: una fila por cada una (salen en el PDF). */
+function renderEspecs() {
+  $("especs").innerHTML = especs.map((e, i) => `<div class="espec-row">
+      <input data-esp="${i}" value="${esc(e.t)}" placeholder="Ej: Vidrio incoloro 4 mm · Entrega en 20 días hábiles" aria-label="Especificación ${i + 1}">
+      <button class="x" data-espdel="${i}" aria-label="Quitar especificación ${i + 1}">×</button>
+    </div>`).join("");
+}
+
 /** Detalle de una ventana para mostrar: "2 × Dormitorio · 1,20 × 1,00 m". */
 function medidas(it) {
   return (+it.ancho && +it.alto) ? `${num(+it.ancho)} × ${num(+it.alto)} m` : "";
@@ -40,36 +48,42 @@ function render() {
     return `<tr>
       <td>${i + 1}</td>
       <td><b>${c.k} ×</b> ${esc(it.nombre)}${med ? " · " + med : ""}<span class="chip">${esc(it.linea)}</span><span class="chip">${esc(it.acabado)}</span>
-        <div class="d">${num(c.kg, 2)} kg aluminio${c.m2 ? ` · ${num(c.m2)} m² vidrio${it.vid?.tipo ? " " + esc(it.vid.tipo) : ""}` : ""}${(c.mo || c.ex) ? ` · M. de obra y extras ${pes(c.mo + c.ex)}` : ""}</div>
+        <div class="d">${num(c.kg, 2)} kg aluminio${c.porUnidad ? (c.unidades ? ` · ${num(c.unidades, 0)} unid. ${esc(it.vid.tipo)}` : "") : (c.m2 ? ` · ${num(c.m2)} m² vidrio${it.vid?.tipo ? " " + esc(it.vid.tipo) : ""}` : "")}${(c.mo || c.ex) ? ` · M. de obra y extras ${pes(c.mo + c.ex)}` : ""}</div>
         ${det ? `<div class="d">Por ventana: ${det}</div>` : ""}</td>
-      <td class="n">${pes(pc.out[i])}</td>
+      <td class="n">${dinero(pc.out[i], pc.moneda)}</td>
       <td class="acciones"><button class="btn ghost sm" data-edit="${i}" aria-label="Editar ventana ${i + 1}">Editar</button><button class="x" data-del="${i}" aria-label="Quitar ventana ${i + 1}">×</button></td>
     </tr>`;
   }).join("")
     : `<tr><td colspan="4" class="empty">Todavía no hay ventanas. Cargá los metros a la izquierda y tocá "Guardar ventana en el presupuesto".</td></tr>`;
 
-  const t = totals();
-  $("totales").innerHTML = `<div class="grand"><span>Precio final</span><span>${pes(pc.total)}</span></div>`;
+  const t = totals(), enPesos = preciosCliente("UYU").total;
+  // Botones "Precio en: $ Pesos / U$S Dólares"
+  document.querySelectorAll("#q-moneda [data-qmoneda]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.qmoneda === monedaPres)));
+  $("totales").innerHTML = `<div class="grand"><span>Precio final</span><span>${dinero(pc.total, pc.moneda)}${IVA_INC}</span></div>` +
+    (pc.moneda === "USD" ? `<div class="chico"><span>Equivale a ${pes(enPesos)} con el dólar a $ ${num(P.dolar)}</span></div>` : "");
   const sm = items.reduce((a, it) => { const c = calc(it); a.mat += c.mat; a.mo += c.mo; a.ex += c.ex; return a; }, { mat: 0, mo: 0, ex: 0 });
   $("interno").innerHTML = `
     <div><span>Materiales (aluminio, accesorios, vidrio)</span><span>${pes(sm.mat)}</span></div>
     <div><span>Mano de obra</span><span>${pes(sm.mo)}</span></div>
     <div><span>Extras</span><span>${pes(sm.ex + t.e)}</span></div>
-    <div class="grand"><span>Precio final</span><span>${pes(pc.total)}</span></div>
+    <div class="grand"><span>Precio final</span><span>${pes(enPesos)}</span></div>
+    ${pc.moneda === "USD" ? `<div><span>Al cliente en dólares</span><span>${dinero(pc.total, "USD")}</span></div>` : ""}
     <div class="chico">Dólar a $ ${num(P.dolar)}</div>`;
   saveDraft();
 }
 
 function saveDraft() {
   const c = cliente();
-  save(CLAVES.borrador, { items, extras, F, editIdx, numero, cli: [c.nombre, c.tel, c.fecha] });
+  save(CLAVES.borrador, { items, extras, especs, monedaPres, F, editIdx, numero, cli: [c.nombre, c.tel, c.fecha] });
 }
 
 /** Lo que se guarda en "Guardados" para este presupuesto. */
 function datosPresupuesto() {
   const c = cliente();
   return { num: numero, cli: c.nombre, tel: c.tel, fecha: c.fecha, fechaTxt: fechaTxt(),
-           items: structuredClone(items), extras: structuredClone(extras), total: totals().total };
+           items: structuredClone(items), extras: structuredClone(extras),
+           especs: especs.filter(e => e.t.trim()).map(e => ({ t: e.t.trim() })), total: totals().total,
+           moneda: monedaPres, dolar: +P.dolar };
 }
 
 /** true si lo que está en pantalla es igual a lo último que se guardó. */
@@ -77,21 +91,59 @@ function estaGuardado() {
   const q = historial().find(x => x.num === numero);
   if (!q) return false;
   const a = normalizarPresupuesto(datosPresupuesto()); // mismo formato que lo guardado
-  return ["cli", "tel", "fecha", "items", "extras"].every(k => JSON.stringify(q[k] ?? "") === JSON.stringify(a[k] ?? ""));
+  return ["cli", "tel", "fecha", "items", "extras", "especs", "moneda"].every(k => JSON.stringify(q[k] ?? "") === JSON.stringify(a[k] ?? ""));
 }
 
 function textoWhatsApp() {
   const pc = preciosCliente();
   let s = `*${(EMP.nombre || "Alucast").toUpperCase()} · Presupuesto ${nro(numero)}*\n${fechaTxt()}\nCliente: ${$("c-nombre").value || "-"}\n\n`;
   items.forEach((it, i) => {
-    const med = medidas(it).replace(" × ", "x");
-    s += `${i + 1}. ${cantV(it)} x ${it.nombre}${med ? " " + med : ""} (${it.linea}, ${it.acabado.toLowerCase()}): ${pes(pc.out[i])}\n`;
+    const med = medidas(it).replace(" × ", "x"), k = cantV(it);
+    const d = n => dinero(n, pc.moneda);
+    const precio = k > 1 ? `${d(pc.out[i] / k)} c/u = ${d(pc.out[i])}` : d(pc.out[i]);
+    s += `${i + 1}. ${k} x ${it.nombre}${med ? " " + med : ""} (${it.linea}, ${it.acabado.toLowerCase()}): ${precio}\n`;
   });
-  return s + `\n*PRECIO FINAL: ${pes(pc.total)}*`;
+  s += `\n*PRECIO FINAL: ${dinero(pc.total, pc.moneda)}${IVA_INC}*`;
+  const specs = [...String(EMP.condiciones || "").split("\n"), ...especs.map(e => e.t)].map(x => x.trim()).filter(Boolean);
+  if (specs.length) s += `\n\n*Especificaciones*\n${specs.map(x => "• " + x).join("\n")}`;
+  return s + `\n\n${MENSAJE_CIERRE}`;
 }
 
 // ---- Eventos ----
 $("cliente").addEventListener("input", render);
+
+// Moneda del precio final (pesos o dólares)
+$("q-moneda").addEventListener("click", e => {
+  const m = e.target.dataset.qmoneda;
+  if (!m || m === monedaPres) return;
+  monedaPres = m;
+  render();
+  toast(m === "USD" ? "Precio en dólares" : "Precio en pesos");
+});
+
+// Especificaciones
+$("especs").addEventListener("input", e => {
+  const i = e.target.dataset.esp;
+  if (i !== undefined) { especs[+i].t = e.target.value; saveDraft(); }
+});
+$("especs").addEventListener("keydown", e => {
+  // Enter en una especificación agrega la siguiente
+  if (e.key === "Enter" && e.target.dataset.esp !== undefined) { e.preventDefault(); $("add-espec").click(); }
+});
+$("especs").onclick = e => {
+  const i = e.target.dataset.espdel;
+  if (i === undefined) return;
+  especs.splice(+i, 1);
+  renderEspecs();
+  saveDraft();
+  ($("especs").querySelector(`[data-esp="${Math.min(+i, especs.length - 1)}"]`) || $("add-espec")).focus();
+};
+$("add-espec").onclick = () => {
+  especs.push({ t: "" });
+  renderEspecs();
+  saveDraft();
+  $("especs").querySelector(".espec-row:last-child input")?.focus();
+};
 
 $("extras").addEventListener("input", e => {
   const d = e.target.dataset;
@@ -154,6 +206,8 @@ $("conf-no").onclick = () => { $("conf-nuevo").hidden = true; $("btn-nuevo").foc
 $("conf-si").onclick = () => {
   items = [];
   extras = [];
+  especs = [];
+  monedaPres = "UYU";
   editIdx = -1;
   F = blank();
   $("c-nombre").value = "";
@@ -164,6 +218,7 @@ $("conf-si").onclick = () => {
   numero = siguienteNumero();
   save(CLAVES.numero, numero);
   renderExtras();
+  renderEspecs();
   renderForm();
   render();
   toast("Presupuesto nuevo listo");

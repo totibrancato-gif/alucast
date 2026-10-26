@@ -10,31 +10,20 @@ const CLAVES = {
   numero: "alucast-num",           // último número de presupuesto usado
   borrador: "alucast-borrador-v5", // lo que estás cargando ahora
   empresa: "alucast-empresa",      // tus datos para el PDF
+  gastos: "alucast-gastos-v1",     // movimientos de caja chica, banco y deudores por ventas
+  deudores: "alucast-deudores-v1", // cada cliente que te debe (una cuenta por deudor)
 };
 
-// Lista de precios de fábrica (cargada el 12/10/2026, igual que en la versión web)
-const defPerfiles = lista => lista.map(([n, kgm]) => ({ n, kgm }));
-const defPrecios = lista => lista.map(([n, usd]) => ({ n, usd }));
+// Lista de precios de fábrica: la que cargó el usuario (ver lista-fabrica.js).
+// En vidrios, usd = precio por m², salvo los que tienen unidad: true (precio por pieza, como el acrílico).
 const DEF = {
-  dolar: 41, vidrio: 14, barra: 6.8,
-  acabados: { "Negro": 12, "Gris": 10.5, "Anolok": 14 },
-  lineas: [
-    { n: "Probba",
-      perfiles: defPerfiles([["RIEL PROBBA", 0.921], ["LATERAL MARCO", 0.554], ["ENGANCHE HOJA", 0.615], ["LATERAL HOJA", 0.62], ["DIVISOR HOJA", 0.6], ["HOJA MOSQUITERO", 0.53], ["RIEL MOSQUITERO", 0.32]]),
-      accesorios: defPrecios([["MANIJAS", 0.4], ["RUEDAS 40Kg", 1.68], ["CIERRE LARA", 1.5], ["TAPON", 0.55], ["DISPOSITIVO", 0.9], ["CUBRE DESAGUE", 0.5], ["BURLETE", 0.53], ["TEJIDO", 4.5], ["RUEDAS MOSQUITERO", 0.7], ["RUEDAS 80Kg", 3.8]]) },
-    { n: "Serie 20",
-      perfiles: defPerfiles([["MARCO SUPERIOR", 0.605], ["MARCO LATERAL", 0.4], ["DIVISOR HOJA", 0.4], ["ENGANCHE", 0.473], ["LATERAL HOJA", 0.432], ["RIEL MOSQUITERO", 0.19], ["HOJA MOSQUITERO", 0.25]]),
-      accesorios: defPrecios([["RUEDAS VERDE", 0.3], ["RUEDA RULEMAN", 1.25], ["MANIJAS", 0.4], ["CIERRE", 1.5], ["BURLETE", 0.53], ["CUBRE DESAGUE", 0.25], ["DISPOSITIVO", 0.9], ["TEJIDO", 4.5], ["MANIJA MOSQUITERO", 0.4], ["PATIN", 0.15], ["TAPON", 0.1]]) },
-    { n: "Mampara",
-      perfiles: defPerfiles([["PERFIL U", 0], ["GUÍA SUPERIOR", 0], ["GUÍA INFERIOR", 0], ["TIRADOR", 0]]),
-      accesorios: defPrecios([["RUEDAS MAMPARA", 0], ["TOPES", 0]]) },
-    { n: "SERIE 30", perfiles: [], accesorios: [] },
-    { n: "GALA", perfiles: [], accesorios: [] },
-    { n: "GALA BATIENTE", perfiles: [], accesorios: [] },
-    { n: "PROBBA BATIENTE", perfiles: [], accesorios: [] },
-  ],
-  vidrios: defPrecios([["3 mm", 8], ["4 mm", 14], ["5 mm", 19], ["6 mm", 22], ["Laminado", 40], ["Fantasía", 23]]),
+  dolar: 41, vidrio: 14,
+  barra: LISTA_FABRICA.barra,
+  acabados: structuredClone(LISTA_FABRICA.acabados),
+  lineas: structuredClone(LISTA_FABRICA.lineas),
+  vidrios: structuredClone(LISTA_FABRICA.vidrios),
 };
+const VERSION_LISTA = "alucast-precios-2026-10-24"; // marca de la última lista de fábrica aplicada
 
 const EMPRESA_DEF = { nombre: "Alucast", tel: "098975733", dir: "Bolivia 915", extra: "", validez: "15", condiciones: "" };
 const NUMERO_INICIAL = 2345;
@@ -44,6 +33,8 @@ let P = load(CLAVES.lista, structuredClone(DEF)); // lista de precios
 let EMP = { ...EMPRESA_DEF, ...load(CLAVES.empresa, {}) };
 let items = [];      // ventanas del presupuesto actual
 let extras = [];     // extras generales (solo presupuestos de la versión anterior)
+let especs = [];     // especificaciones de este presupuesto (salen en el PDF): [{ t: "texto" }]
+let monedaPres = "UYU"; // moneda del precio final de este presupuesto: "UYU" (pesos) o "USD" (dólares)
 let numero = load(CLAVES.numero, NUMERO_INICIAL);
 
 // ---- Actualizaciones de datos (cada una corre una sola vez, igual que en la web) ----
@@ -85,6 +76,42 @@ let numero = load(CLAVES.numero, NUMERO_INICIAL);
     delete P.compra; delete P.venta; delete P.dolarFecha;
     try { localStorage.removeItem("alucast-dolar-auto"); } catch (e) { /* sin acceso */ }
     save("alucast-dolar-fijo", true);
+  }
+  // "Probba 2": copia exacta de Probba (perfiles, accesorios, precios y descuentos de vidrio), una sola vez
+  if (!load("alucast-probba2", false)) {
+    const i = P.lineas.findIndex(l => l.n === "Probba");
+    if (i >= 0 && !P.lineas.some(l => l.n === "Probba 2")) {
+      P.lineas.splice(i + 1, 0, { ...structuredClone(P.lineas[i]), n: "Probba 2" });
+    }
+    save("alucast-probba2", true);
+  }
+  // Acrílico para la mampara, cobrado por unidad (si ya existía uno con ese nombre, pasa a ser por unidad)
+  if (!load("alucast-acrilico", false)) {
+    const sinTilde = s => String(s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+    let acr = P.vidrios.find(g => sinTilde(g.n) === "acrilico");
+    if (acr) acr.unidad = true;
+    else { acr = { n: "Acrílico", usd: 0, unidad: true }; P.vidrios.push(acr); }
+    const mampara = P.lineas.find(l => sinTilde(l.n) === "mampara");
+    if (mampara && !mampara.vidrioDef) mampara.vidrioDef = acr.n;
+    save("alucast-acrilico", true);
+  }
+  // Lista de precios del usuario (24/10/2026): reemplaza tipos de ventana, perfiles, accesorios,
+  // vidrios y precios por kg. Se conservan el dólar y cómo se cobra el aluminio. Una sola vez.
+  if (!load(VERSION_LISTA, false)) {
+    Object.assign(P, { barra: DEF.barra, acabados: structuredClone(DEF.acabados),
+      lineas: structuredClone(DEF.lineas), vidrios: structuredClone(DEF.vidrios), barra68: true, descEnM: true });
+    save(VERSION_LISTA, true);
+  }
+  // Acrílico por unidad para la mampara, también en compus que ya tenían la lista del 24/10 (una sola vez).
+  // Si ya existe un vidrio "acrílico" se respeta su precio y solo pasa a cobrarse por unidad.
+  if (!load("alucast-acrilico-v2", false)) {
+    const sinTilde = s => String(s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+    let acr = P.vidrios.find(g => sinTilde(g.n) === "acrilico");
+    if (acr) acr.unidad = true;
+    else { acr = { n: "Acrílico", usd: 0, unidad: true }; P.vidrios.push(acr); }
+    const mampara = P.lineas.find(l => sinTilde(l.n) === "mampara");
+    if (mampara) mampara.vidrioDef = acr.n;
+    save("alucast-acrilico-v2", true);
   }
   save(CLAVES.lista, P);
   // La numeración arranca en 2345
@@ -138,15 +165,20 @@ function blank(linea) {
     acabado: Object.keys(P.acabados)[0],
     alu: l.perfiles.map(p => ({ n: p.n, m: "" })),
     acc: l.accesorios.map(a => ({ n: a.n, q: "" })),
-    vid: { cant: "", ancho: "", alto: "", tipo: vidrioPorDefecto() },
-    mo: "", exs: [], // mano de obra y extras de esta ventana, en pesos
+    vid: { cant: "", ancho: "", alto: "", tipo: vidrioPorDefecto(l.n) },
+    mo: "", exs: [], // mano de obra (por ventana) y extras (total) de esta ventana, en pesos
   };
 }
 
-/** El vidrio que se elige al empezar una ventana: 4 mm, o el primero de la lista. */
-function vidrioPorDefecto() {
+/**
+ * El vidrio que se elige al empezar una ventana: el que tenga configurado ese tipo
+ * de ventana (ej.: Mampara → Acrílico); si no, 4 mm o el primero de la lista.
+ */
+function vidrioPorDefecto(linea) {
   const v = P.vidrios || [];
-  return (v.find(g => g.n === "4 mm") || v[0] || {}).n || "";
+  const propio = linea && L(linea).vidrioDef;
+  const es4mm = g => String(g.n).replace(/\s/g, "").toLowerCase() === "4mm"; // "4 mm" o "4mm"
+  return (v.find(g => g.n === propio) || v.find(es4mm) || v[0] || {}).n || "";
 }
 
 /**
@@ -166,10 +198,12 @@ function normalizarItem(it) {
     alu: lista(v.alu).map(l => ({ ...l, n: String(l.n ?? ""), m: String(l.m ?? "") })),
     acc: lista(v.acc).map(l => ({ ...l, n: String(l.n ?? ""), q: String(l.q ?? "") })),
     vid: { ...vid, cant: String(vid.cant ?? ""), ancho: String(vid.ancho ?? ""), alto: String(vid.alto ?? ""), tipo: String(vid.tipo ?? "") },
-    mo: String(v.mo ?? ""),
-    exs: lista(v.exs).map(x => ({ c: String(x.c ?? ""), monto: String(x.monto ?? "") })),
+    mo: String(v.mo ?? ""),    exs: lista(v.exs).map(x => ({ c: String(x.c ?? ""), monto: String(x.monto ?? "") })),
   };
 }
+
+/** Especificaciones como lista de textos: [{ t }]. */
+const normalizarEspecs = l => (Array.isArray(l) ? l : []).filter(e => e && typeof e === "object").map(e => ({ t: String(e.t ?? "") }));
 
 /** Un presupuesto guardado con número entero, fechas válidas y ventanas completas. */
 function normalizarPresupuesto(q) {
@@ -184,6 +218,9 @@ function normalizarPresupuesto(q) {
     items: (Array.isArray(q.items) ? q.items : []).map(normalizarItem),
     extras: (Array.isArray(q.extras) ? q.extras : []).filter(x => x && typeof x === "object")
       .map(x => ({ c: String(x.c ?? ""), monto: String(x.monto ?? "") })),
+    especs: normalizarEspecs(q.especs),
+    moneda: q.moneda === "USD" ? "USD" : "UYU",  // en qué moneda se le pasó el precio al cliente
+    dolar: +q.dolar || 0,                          // dólar del día en que se guardó (para mostrarlo en U$S)
     total: +q.total || 0,
   };
 }

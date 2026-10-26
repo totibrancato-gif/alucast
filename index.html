@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <!-- Seguridad: solo se ejecuta el código de la propia app (nada de afuera ni insertado en la página) -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' ws://127.0.0.1:* ws://localhost:*; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' ws: http://127.0.0.1:* http://localhost:* https://joedpfvixhxbegdtgpky.supabase.co; object-src 'none'; base-uri 'none'; form-action 'none'">
   <meta name="theme-color" content="#1d5a86">
   <title>Presupuestos Alucast</title>
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
@@ -22,9 +22,17 @@
 
 <div class="wrap">
   <header class="brand">
-    <div>
-      <h1 class="logo">Alu<span>cast</span></h1>
-      <div class="sub">Aberturas de aluminio · Presupuestador</div>
+    <div class="marca">
+      <!-- Menú desplegable (arriba a la izquierda) -->
+      <div class="menu">
+        <button class="menu-btn" id="menu-btn" aria-expanded="false" aria-controls="menu-panel" aria-label="Abrir menú">
+          <span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>
+        </button>
+      </div>
+      <div>
+        <h1 class="logo">Alu<span>cast</span></h1>
+        <div class="sub">Aberturas de aluminio · Presupuestador</div>
+      </div>
     </div>
     <nav class="tabs" role="tablist" aria-label="Secciones">
       <button class="tab" role="tab" id="t-presu" aria-controls="v-presu" aria-selected="true">Presupuesto</button>
@@ -97,13 +105,13 @@
           <label>Cantidad<input id="g-cant" type="text" inputmode="decimal" autocomplete="off"></label>
           <label>Ancho (m)<input id="g-ancho" type="text" inputmode="decimal" autocomplete="off"></label>
           <label>Alto (m)<input id="g-alto" type="text" inputmode="decimal" autocomplete="off"></label>
-          <label>M² totales<input id="g-m2" readonly tabindex="-1"></label>
+          <label><span id="g-m2-et">M² totales</span><input id="g-m2" readonly tabindex="-1"></label>
         </div>
 
         <div class="mo-box" id="mo-box">
           <h3>Mano de obra y extras de esta ventana</h3>
-          <p class="note intro">En pesos, el total para esta ventana (no se multiplica por la cantidad). Van incluidos en su precio; el cliente no los ve por separado.</p>
-          <label class="mo-campo">Mano de obra ($)<input id="v-mo" data-pesos type="text" inputmode="decimal" autocomplete="off" placeholder="0"></label>
+          <p class="note intro">En pesos. La mano de obra es por cada ventana y se multiplica por la cantidad; los extras son el total. Van incluidos en su precio; el cliente no los ve por separado.</p>
+          <label class="mo-campo">Mano de obra por ventana ($)<input id="v-mo" data-pesos type="text" inputmode="decimal" autocomplete="off" placeholder="0"></label>
           <div class="mo-titulo">Extras</div>
           <div id="v-exs"></div>
           <button class="btn ghost sm" id="add-ex">+ Agregar extra</button>
@@ -138,6 +146,13 @@
             <tbody id="items"></tbody>
           </table>
         </div>
+        <div class="moneda-fila precio-en">
+          <span class="moneda-et" id="q-moneda-et">Precio en</span>
+          <div class="tabs moneda" role="group" aria-labelledby="q-moneda-et" id="q-moneda">
+            <button class="tab" data-qmoneda="UYU" aria-pressed="true">$ Pesos</button>
+            <button class="tab" data-qmoneda="USD" aria-pressed="false">U$S Dólares</button>
+          </div>
+        </div>
         <div class="totals" id="totales"></div>
         <div class="actions">
           <button class="btn" id="btn-guardar">Guardar</button>
@@ -151,6 +166,13 @@
           <button class="btn ghost" id="conf-no">Cancelar</button>
         </div>
         <textarea id="copia" hidden readonly aria-label="Texto para WhatsApp"></textarea>
+      </section>
+
+      <section class="panel especs" id="especs-box">
+        <h2>Especificaciones</h2>
+        <p class="note intro">Salen en el PDF de este presupuesto. Cargalas antes de enviarlo (ej.: color de vidrio, plazo de entrega, forma de pago).</p>
+        <div id="especs"></div>
+        <button class="btn ghost sm" id="add-espec">+ Agregar especificación</button>
       </section>
 
       <section class="panel interno">
@@ -199,6 +221,8 @@
         <label class="p-nombre">Nombre del tipo<input id="p-lnombre" autocomplete="off"></label>
         <label class="p-desc">Descuento vidrio ancho (m)<input id="p-desca" data-desc="descA" type="text" inputmode="decimal" autocomplete="off" placeholder="0"></label>
         <label class="p-desc">Descuento vidrio alto (m)<input id="p-desch" data-desc="descH" type="text" inputmode="decimal" autocomplete="off" placeholder="0"></label>
+        <label class="p-desc">Vidrio que usa<select id="p-vdef"></select></label>
+        <button class="btn ghost sm" id="p-ldup">Duplicar este tipo</button>
         <button class="btn warn sm" id="p-ldel">Borrar este tipo</button>
       </div>
       <div class="confirm" id="p-ldel-conf" role="alertdialog" aria-labelledby="p-ldel-txt" hidden>
@@ -232,7 +256,7 @@
       <h2>Vidrios</h2>
       <div class="tbl-wrap">
         <table class="edit">
-          <thead><tr><th>Tipo de vidrio</th><th class="n">Precio U$S / m²</th><th><span class="sr">Quitar</span></th></tr></thead>
+          <thead><tr><th>Tipo de vidrio</th><th>Se cobra por</th><th class="n">Precio U$S</th><th><span class="sr">Quitar</span></th></tr></thead>
           <tbody id="p-vid"></tbody>
         </table>
       </div>
@@ -241,8 +265,80 @@
     <div class="actions arriba"><button class="btn ghost" id="btn-reset-precios">Volver a los precios de la planilla</button></div>
   </div>
 
+  <!-- ================= CONTROL DE GASTOS (se abre desde el menú) ================= -->
+  <div id="v-gastos" class="stack" aria-labelledby="g-h" hidden>
+    <section class="panel">
+      <h2 id="g-h" tabindex="-1">Control de gastos</h2>
+      <div class="saldos" id="saldos"></div>
+    </section>
+
+    <section class="panel" id="g-deudores">
+      <div class="quote-head abajo">
+        <div><h2>Deudores por ventas</h2><p class="note intro">Cada cliente que te debe es una cuenta. El total de arriba es la suma de todos.</p></div>
+      </div>
+      <div id="deudores"></div>
+      <div class="d-alta">
+        <label class="d-alta-n">Agregar deudor<input id="d-nuevo" autocomplete="off" placeholder="Nombre del cliente"></label>
+        <button class="btn ghost" id="d-agregar">＋ Agregar</button>
+      </div>
+    </section>
+
+    <section class="panel" id="g-form">
+      <h2>Nuevo movimiento</h2>
+      <div class="tabs tipo-mov" role="group" aria-label="Tipo de movimiento" id="g-tipo-mov">
+        <button class="tab" data-tipo="entrada" aria-pressed="true">Entra plata</button>
+        <button class="tab" data-tipo="salida" aria-pressed="false">Sale plata</button>
+        <button class="tab" data-tipo="pase" aria-pressed="false">Pasar de una a otra</button>
+      </div>
+      <p class="note intro" id="g-ayuda"></p>
+      <div class="moneda-fila">
+        <span class="moneda-et" id="g-moneda-et">Moneda</span>
+        <div class="tabs moneda" role="group" aria-labelledby="g-moneda-et" id="g-moneda">
+          <button class="tab" data-moneda="UYU" aria-pressed="true">$ Pesos</button>
+          <button class="tab" data-moneda="USD" aria-pressed="false">U$S Dólares</button>
+        </div>
+      </div>
+      <div class="fields">
+        <label id="g-desde-l">Sale de<select id="g-desde"></select></label>
+        <label id="g-hacia-l">Entra a<select id="g-hacia"></select></label>
+        <label id="g-nuevo-l" hidden>Nombre del deudor nuevo<input id="g-nuevo" autocomplete="off" placeholder="Ej: Juan Pérez"></label>
+        <label><span id="g-monto-et">Monto ($)</span><input id="g-monto" data-pesos type="text" inputmode="decimal" autocomplete="off" placeholder="0"></label>
+        <label>Fecha<input id="g-fecha" type="date"></label>
+        <label class="ancho-total">Descripción<input id="g-desc" autocomplete="off" placeholder="Ej: Compra de perfiles, seña de Pérez, sueldo…"></label>
+      </div>
+      <div class="actions">
+        <button class="btn" id="g-guardar">Guardar movimiento</button>
+      </div>
+      <p class="error" id="g-error" role="alert" hidden></p>
+    </section>
+
+    <section class="panel">
+      <div class="quote-head abajo"><h2>Movimientos</h2>
+        <label>Ver<select id="g-filtro"></select></label></div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Fecha</th><th>Descripción</th><th>Cuenta</th><th class="n col-uyu">Pesos ($)</th><th class="n col-usd">Dólares (U$S)</th><th><span class="sr">Borrar</span></th></tr></thead>
+          <tbody id="g-lista"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
   <!-- ================= AJUSTES Y COPIA ================= -->
   <div id="v-backup" class="stack" role="tabpanel" aria-labelledby="t-backup" hidden>
+    <section class="panel">
+      <h2>Tu cuenta</h2>
+      <p class="note intro">Tus presupuestos, precios y gastos se guardan en la nube y se ven igual en la compu, la Mac, la tablet y la web. Sin internet seguís trabajando y se sincroniza cuando vuelve la conexión.</p>
+      <div class="nube-fila">
+        <div><span class="nube-et">Entraste como</span> <b id="nube-email">—</b></div>
+        <div class="nube-estado" id="nube-estado" aria-live="polite"></div>
+      </div>
+      <div class="actions arriba">
+        <button class="btn ghost" id="nube-ahora">Sincronizar ahora</button>
+        <button class="btn warn sm" id="nube-salir">Cerrar sesión</button>
+      </div>
+      <p class="note" id="nube-respaldo" hidden>Antes de conectarse por primera vez, esta compu guardó una copia de lo que tenía. <button class="btn ghost sm" id="nube-recuperar">Ver la copia de antes de la nube</button></p>
+    </section>
     <section class="panel">
       <h2>Tus datos en el PDF</h2>
       <p class="note intro">Esto aparece en el PDF del presupuesto que le mandás al cliente. Lo que dejes vacío no se muestra.</p>
@@ -252,7 +348,7 @@
         <label>Dirección o ciudad<input data-emp="dir" autocomplete="street-address"></label>
         <label>Email o RUT<input data-emp="extra" autocomplete="email"></label>
         <label>Validez del presupuesto (días)<input data-emp="validez" type="text" inputmode="decimal" autocomplete="off"></label>
-        <label class="ancho-total">Condiciones y notas<textarea data-emp="condiciones" placeholder="Ej: Forma de pago, plazo de entrega, qué incluye…"></textarea></label>
+        <label class="ancho-total">Especificaciones fijas (salen en todos los presupuestos, una por línea)<textarea data-emp="condiciones" placeholder="Ej: Forma de pago: 50% de seña y 50% al entregar"></textarea></label>
       </div>
     </section>
     <section class="panel">
@@ -268,13 +364,54 @@
   </div>
 </div>
 
+<!-- ================= MENÚ LATERAL (se abre con ☰ arriba a la izquierda) ================= -->
+<div class="cajon-fondo" id="menu-fondo"></div>
+<nav class="cajon" id="menu-panel" aria-label="Menú" aria-hidden="true" inert>
+  <div class="cajon-cab">
+    <div class="logo">Alu<span>cast</span></div>
+    <button class="cajon-cerrar" id="menu-cerrar" aria-label="Cerrar menú">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+
+  <section class="cajon-sec">
+    <button class="sec-cab" id="m-presu-btn" aria-expanded="true" aria-controls="m-presu">
+      <span class="sec-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/></svg></span>
+      <span class="sec-txt"><span class="sec-t">Presupuestos</span><span class="sec-s">Elegí el tipo de abertura</span></span>
+      <span class="sec-chev" aria-hidden="true"></span>
+    </button>
+    <div class="sec-cuerpo" id="m-presu"></div>
+  </section>
+
+  <section class="cajon-sec">
+    <button class="sec-cab" id="m-gastos-btn" aria-expanded="true" aria-controls="m-gastos">
+      <span class="sec-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h15a3 3 0 0 1 3 3v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M3 7l12-3v3M16 14h2"/></svg></span>
+      <span class="sec-txt"><span class="sec-t">Control de gastos</span><span class="sec-s">Saldos al día</span></span>
+      <span class="sec-chev" aria-hidden="true"></span>
+    </button>
+    <div class="sec-cuerpo" id="m-gastos"></div>
+  </section>
+</nav>
+
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<!-- Hoja que se imprime / guarda como PDF (se arma en js/pdf.js) -->
-<div id="hoja" class="hoja"></div>
+<!-- ================= INICIO DE SESIÓN (tapa la app hasta que entrás) ================= -->
+<div class="login" id="login" role="dialog" aria-modal="true" aria-labelledby="login-h" hidden>
+  <form class="login-caja panel" id="login-form" novalidate>
+    <div class="logo">Alu<span>cast</span></div>
+    <h2 id="login-h">Entrar</h2>
+    <p class="note intro">Con el correo y la contraseña de tu usuario de Alucast.</p>
+    <label>Correo<input id="login-email" type="email" autocomplete="username" inputmode="email"></label>
+    <label>Contraseña<input id="login-clave" type="password" autocomplete="current-password"></label>
+    <button class="btn" id="login-entrar" type="submit">Entrar</button>
+    <p class="error" id="login-error" role="alert" hidden></p>
+  </form>
+</div>
+
 
 <script src="plataforma.js"></script>
 <script src="utilidades.js"></script>
+<script src="lista-fabrica.js"></script>
 <script src="datos.js"></script>
 <script src="calculo.js"></script>
 <script src="ventana.js"></script>
@@ -283,7 +420,11 @@
 <script src="precios.js"></script>
 <script src="dolar.js"></script>
 <script src="copia.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" integrity="sha512-qZvrmS2ekKPF2mSznTQsxqPgnpkI4DNTlrdUmTzrDgektczlKNRRhy5X5AAOnx5S09ydFYWWNSfcEqDTTHgtNA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="pdf.js"></script>
+<script src="gastos.js"></script>
+<script src="menu.js"></script>
+<script src="nube.js"></script>
 <script src="app.js"></script>
 <script src="sw-registro.js"></script>
 </body>
