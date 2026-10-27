@@ -47,7 +47,7 @@ function render() {
     const med = medidas(it);
     return `<tr>
       <td>${i + 1}</td>
-      <td><b>${c.k} ×</b> ${esc(it.nombre)}${med ? " · " + med : ""}<span class="chip">${esc(it.linea)}</span><span class="chip">${esc(it.acabado)}</span>
+      <td><b>${c.k} ×</b> ${esc(it.nombre)}${med ? " · " + med : ""}<span class="chip">${esc(it.linea)}</span><span class="chip">${esc(it.acabado)}</span>${conMosquitero(it) ? `<span class="chip">Con mosquitero</span>` : ""}
         <div class="d">${num(c.kg, 2)} kg aluminio${c.porUnidad ? (c.unidades ? ` · ${num(c.unidades, 0)} unid. ${esc(it.vid.tipo)}` : "") : (c.m2 ? ` · ${num(c.m2)} m² vidrio${it.vid?.tipo ? " " + esc(it.vid.tipo) : ""}` : "")}${(c.mo || c.ex) ? ` · M. de obra y extras ${pes(c.mo + c.ex)}` : ""}</div>
         ${det ? `<div class="d">Por ventana: ${det}</div>` : ""}</td>
       <td class="n">${dinero(pc.out[i], pc.moneda)}</td>
@@ -101,7 +101,7 @@ function textoWhatsApp() {
     const med = medidas(it).replace(" × ", "x"), k = cantV(it);
     const d = n => dinero(n, pc.moneda);
     const precio = k > 1 ? `${d(pc.out[i] / k)} c/u = ${d(pc.out[i])}` : d(pc.out[i]);
-    s += `${i + 1}. ${k} x ${it.nombre}${med ? " " + med : ""} (${it.linea}, ${it.acabado.toLowerCase()}): ${precio}\n`;
+    s += `${i + 1}. ${k} x ${it.nombre}${med ? " " + med : ""} (${it.linea}, ${it.acabado.toLowerCase()}${conMosquitero(it) ? ", con mosquitero" : ""}): ${precio}\n`;
   });
   s += `\n*PRECIO FINAL: ${dinero(pc.total, pc.moneda)}${IVA_INC}*`;
   const specs = [...String(EMP.condiciones || "").split("\n"), ...especs.map(e => e.t)].map(x => x.trim()).filter(Boolean);
