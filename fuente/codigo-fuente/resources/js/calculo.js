@@ -23,6 +23,8 @@ const vidrioPorUnidad = tipo => !!(P.vidrios || []).find(x => x.n === tipo)?.uni
 const accUsd = (n, lin) => L(lin).accesorios.find(a => a.n === n)?.usd ?? 0;
 /** Cantidad de ventanas iguales (mínimo 1). */
 const cantV = v => Math.max(1, parseInt(v.cant) || 1);
+/** ¿La ventana lleva mosquitero? (tiene metros cargados en algún perfil "HOJA MOSQUITERO…") */
+const conMosquitero = v => (v.alu || []).some(l => /hoja\s+mosquitero/i.test(l.n) && +l.m > 0);
 /** Total de k ventanas iguales: el precio de una, redondeado, por la cantidad (así "c/u × k" da justo). */
 const porCantidad = (total, k) => Math.round(total / k) * k;
 
