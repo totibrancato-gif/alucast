@@ -134,7 +134,7 @@ function updateForm() {
  * actualizan los textos: así no se pierde el foco al elegir con las flechas.
  */
 function pintarAcabados(c) {
-  const acabados = Object.keys(P.acabados), fin = $("fin");
+  const acabados = listaAcabados(), fin = $("fin");
   if (fin.dataset.acabados !== acabados.join("|")) {
     fin.dataset.acabados = acabados.join("|");
     fin.innerHTML = acabados.map((a, j) => `

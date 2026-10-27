@@ -11,7 +11,7 @@ const campoNum = (atributos, valor, extra = "") =>
   `<input type="text" inputmode="decimal" autocomplete="off" ${atributos} value="${esc(valor)}"${extra}>`;
 
 function renderPrecios() {
-  const acabados = Object.keys(P.acabados);
+  const acabados = listaAcabados();
 
   $("p-gen").innerHTML =
     `<label>Dólar<input value="$ ${num(P.dolar)}" readonly tabindex="-1" title="Se cambia con las flechas en la pestaña Presupuesto"></label>` +
@@ -76,7 +76,7 @@ function renderVidrios() {
 
 /** Actualiza kg/m ↔ kg/barra y lo que sale el metro en cada acabado (sin tocar el campo que estás escribiendo). */
 function calcPrecios() {
-  const acabados = Object.keys(P.acabados);
+  const acabados = listaAcabados();
   (P.lineas[PL]?.perfiles || []).forEach((p, i) => {
     const kb = $("pk-" + i);
     if (kb && document.activeElement !== kb) kb.value = Math.round(p.kgm * P.barra * 1000) / 1000;

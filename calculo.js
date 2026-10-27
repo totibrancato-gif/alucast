@@ -64,7 +64,7 @@ function calc(v) {
   const { mo, ex } = manoDeObra(v);
 
   const por = {};
-  Object.keys(P.acabados).forEach(a => {
+  listaAcabados().forEach(a => {
     const alu = v.alu.reduce((s, l) => s + lineaAlu(l, v.linea, k).kg * precioKg(perfilDe(l.n, v.linea), a), 0);
     const usd = alu + acc + vid;
     por[a] = { usd, pesos: usd * P.dolar + mo + ex };

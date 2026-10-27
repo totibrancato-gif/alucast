@@ -23,6 +23,24 @@ const DEF = {
   lineas: structuredClone(LISTA_FABRICA.lineas),
   vidrios: structuredClone(LISTA_FABRICA.vidrios),
 };
+
+// ---- Acabados ----
+// El orden en que se muestran (la nube no guarda el orden). Los que no están acá van al final.
+const ORDEN_ACABADOS = ["Negro", "Blanco", "Gris", "Anolok"];
+/** Acabados de la lista de precios, en el orden de siempre (el primero es el que arranca elegido). */
+function listaAcabados() {
+  const pos = a => { const i = ORDEN_ACABADOS.indexOf(a); return i < 0 ? ORDEN_ACABADOS.length : i; };
+  return Object.keys(P.acabados).sort((a, b) => pos(a) - pos(b));
+}
+/** Blanco cuesta igual que Negro: precio general y precios propios de cada perfil. */
+function agregarBlanco(lista) {
+  if (!lista.acabados || "Blanco" in lista.acabados) return;
+  lista.acabados.Blanco = lista.acabados.Negro ?? 0;
+  (lista.lineas || []).forEach(l => (l.perfiles || []).forEach(p => {
+    if (p.precio && p.precio.Negro !== undefined) p.precio.Blanco = p.precio.Negro;
+  }));
+}
+agregarBlanco(DEF);
 const VERSION_LISTA = "alucast-precios-2026-10-24"; // marca de la última lista de fábrica aplicada
 
 const EMPRESA_DEF = { nombre: "Alucast", tel: "098975733", dir: "Bolivia 915", extra: "", validez: "15", condiciones: "" };
@@ -113,6 +131,11 @@ let numero = load(CLAVES.numero, NUMERO_INICIAL);
     if (mampara) mampara.vidrioDef = acr.n;
     save("alucast-acrilico-v2", true);
   }
+  // Acabado Blanco, con los mismos precios que Negro (una sola vez)
+  if (!load("alucast-blanco", false)) {
+    agregarBlanco(P);
+    save("alucast-blanco", true);
+  }
   save(CLAVES.lista, P);
   // La numeración arranca en 2345
   if (!load("alucast-num-2345", false)) {
@@ -162,7 +185,7 @@ function blank(linea) {
   const l = L(linea || P.lineas[0]?.n);
   return {
     linea: l.n, nombre: "", cant: "1", ancho: "", alto: "",
-    acabado: Object.keys(P.acabados)[0],
+    acabado: listaAcabados()[0],
     alu: l.perfiles.map(p => ({ n: p.n, m: "" })),
     acc: l.accesorios.map(a => ({ n: a.n, q: "" })),
     vid: { cant: "", ancho: "", alto: "", tipo: vidrioPorDefecto(l.n) },
@@ -194,7 +217,7 @@ function normalizarItem(it) {
     linea: String(v.linea ?? "Probba"),
     nombre: String(v.nombre ?? ""),
     cant: String(v.cant ?? "1"),
-    acabado: String(v.acabado ?? Object.keys(P.acabados)[0] ?? ""),
+    acabado: String(v.acabado ?? listaAcabados()[0] ?? ""),
     alu: lista(v.alu).map(l => ({ ...l, n: String(l.n ?? ""), m: String(l.m ?? "") })),
     acc: lista(v.acc).map(l => ({ ...l, n: String(l.n ?? ""), q: String(l.q ?? "") })),
     vid: { ...vid, cant: String(vid.cant ?? ""), ancho: String(vid.ancho ?? ""), alto: String(vid.alto ?? ""), tipo: String(vid.tipo ?? "") },
