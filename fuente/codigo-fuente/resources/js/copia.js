@@ -17,7 +17,7 @@ $("empresa").addEventListener("input", e => {
 // ---- Copia de seguridad ----
 // Incluye las marcas de actualización para que, al importar, no se vuelva a pisar la lista de precios.
 const CLAVES_COPIA = [CLAVES.lista, CLAVES.historial, CLAVES.numero, CLAVES.borrador, CLAVES.empresa, CLAVES.gastos, CLAVES.deudores,
-  "alucast-precios-2026-10-12", "alucast-num-2345", "alucast-num-2345-v2", "alucast-dolar-fijo", "alucast-empresa-contacto", "alucast-probba2", "alucast-acrilico", VERSION_LISTA, "alucast-acrilico-v2"];
+  "alucast-precios-2026-10-12", "alucast-num-2345", "alucast-num-2345-v2", "alucast-dolar-fijo", "alucast-empresa-contacto", "alucast-probba2", "alucast-acrilico", VERSION_LISTA, "alucast-acrilico-v2", "alucast-blanco"];
 let copiaPendiente = null;
 
 $("bk-exp").onclick = () => {
