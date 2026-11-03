@@ -184,7 +184,7 @@ const L = n => P.lineas.find(x => x.n === n) || { n, perfiles: [], accesorios: [
 function blank(linea) {
   const l = L(linea || P.lineas[0]?.n);
   return {
-    linea: l.n, nombre: "", cant: "1", ancho: "", alto: "",
+    linea: l.n, nombre: "", obs: "", cant: "1", ancho: "", alto: "",
     acabado: listaAcabados()[0],
     alu: l.perfiles.map(p => ({ n: p.n, m: "" })),
     acc: l.accesorios.map(a => ({ n: a.n, q: "" })),
@@ -216,6 +216,7 @@ function normalizarItem(it) {
     ...v,
     linea: String(v.linea ?? "Probba"),
     nombre: String(v.nombre ?? ""),
+    obs: String(v.obs ?? ""),
     cant: String(v.cant ?? "1"),
     acabado: String(v.acabado ?? listaAcabados()[0] ?? ""),
     alu: lista(v.alu).map(l => ({ ...l, n: String(l.n ?? ""), m: String(l.m ?? "") })),

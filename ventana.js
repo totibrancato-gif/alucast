@@ -23,6 +23,7 @@ function renderForm() {
   const lin = L(F.linea);
 
   $("v-nombre").value = F.nombre;
+  $("v-obs").value = F.obs ?? "";
   $("v-cant").value = F.cant ?? "1";
   $("v-ancho").value = F.ancho ?? "";
   $("v-alto").value = F.alto ?? "";
@@ -169,6 +170,7 @@ $("form-ventana").addEventListener("input", e => {
   if (d.al !== undefined) { F.alu[+d.al][d.f] = el.value; updateForm(); return; }
   if (d.ac !== undefined) { F.acc[+d.ac][d.f] = el.value; updateForm(); return; }
   if (el.id === "v-nombre") { F.nombre = el.value; saveDraft(); return; }
+  if (el.id === "v-obs") { F.obs = el.value; saveDraft(); return; }
   if (el.id === "v-mo") { F.mo = el.value; avisoMo(false); updateForm(); return; }
   if (d.vx !== undefined) { F.exs[+d.vx][d.f] = el.value; avisoMo(false); updateForm(); return; }
   if (el.id === "v-cant") { F.cant = el.value; updateForm(); return; }
@@ -231,7 +233,7 @@ $("lineas").onclick = e => {
   const n = e.target.dataset.lin;
   if (n === undefined || n === F.linea) return;
   const nuevo = blank(n);
-  nuevo.nombre = F.nombre; nuevo.acabado = F.acabado;
+  nuevo.nombre = F.nombre; nuevo.obs = F.obs; nuevo.acabado = F.acabado;
   // Se conservan las medidas del vidrio. El tipo pasa al propio de la nueva línea si tiene uno (Mampara → Acrílico);
   // si el que había era el automático de la línea anterior, vuelve al de siempre (así Probba no queda con acrílico).
   const propio = L(n).vidrioDef, anterior = L(F.linea).vidrioDef;
