@@ -86,7 +86,7 @@ function generarPDF() {
 
   items.forEach((it, i) => {
     const k = cantV(it);
-    const vidrio = (+it.vid?.cant && it.vid?.tipo) ? `vidrio ${it.vid.tipo}` : "";
+    const vidrio = (+it.vid?.cant && it.vid?.tipo) ? textoVidrio(it.vid.tipo) : "";
     const mosquitero = conMosquitero(it) ? "con mosquitero" : "";
     const detalle = [`Línea ${it.linea}`, `acabado ${it.acabado.toLowerCase()}`, mosquitero, it.obs?.trim(), vidrio, medidas(it)].filter(Boolean).join(" · ");
     fuente("normal", 8.2);
