@@ -9,8 +9,9 @@ const faltanKg = lin => L(lin).perfiles.some(p => !p.kgm);
 const opciones = (lista, sel) => lista.map(x => `<option${x.n === sel ? " selected" : ""}>${esc(x.n)}</option>`).join("");
 
 function renderLineas() {
-  $("lineas").innerHTML = P.lineas.map(l =>
-    `<button class="tab" data-lin="${esc(l.n)}" aria-pressed="${l.n === F.linea}">${esc(l.n)}</button>`).join("");
+  // Si el tipo de esta ventana ya no está en la lista de precios, igual se muestra el suyo
+  const lista = P.lineas.some(l => l.n === F.linea) ? P.lineas : [{ n: F.linea }, ...P.lineas];
+  $("lineas").innerHTML = opciones(lista, F.linea);
 
   const aviso = $("aviso-linea");
   aviso.hidden = !faltanKg(F.linea);
@@ -229,9 +230,9 @@ $("add-acc-l").onclick = () => {
   $("l-acc").querySelector('tr:last-child [data-f="q"]')?.focus();
 };
 
-$("lineas").onclick = e => {
-  const n = e.target.dataset.lin;
-  if (n === undefined || n === F.linea) return;
+/** Cambia el tipo de la ventana que se está cargando, conservando lo que ya se escribió. */
+function cambiarLinea(n) {
+  if (n === F.linea) return;
   const nuevo = blank(n);
   nuevo.nombre = F.nombre; nuevo.obs = F.obs; nuevo.acabado = F.acabado;
   // Se conservan las medidas del vidrio. El tipo pasa al propio de la nueva línea si tiene uno (Mampara → Acrílico);
@@ -244,8 +245,8 @@ $("lineas").onclick = e => {
   nuevo.mo = F.mo; nuevo.exs = F.exs; nuevo.vidManual = F.vidManual;  F = nuevo;
   if (!F.vidManual) vidAuto(); // cada tipo de ventana tiene su propio descuento
   renderForm();
-  $("lineas").querySelector('[aria-pressed="true"]')?.focus();
-};
+}
+$("lineas").onchange = e => cambiarLinea(e.target.value);
 
 $("aviso-linea").onclick = e => {
   const n = e.target.dataset.goto;

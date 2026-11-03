@@ -81,8 +81,7 @@ $("menu-panel").addEventListener("click", e => {
   if (tipo) {
     cerrarMenu(false);
     show("presu");
-    const boton = [...$("lineas").querySelectorAll("[data-lin]")].find(b => b.dataset.lin === tipo.dataset.mlin);
-    if (boton && boton.getAttribute("aria-pressed") !== "true") boton.click();
+    cambiarLinea(tipo.dataset.mlin);
     $("form-ventana").scrollIntoView({ behavior: "smooth", block: "start" });
     $("v-nombre").focus({ preventScroll: true });
     toast(`Ventana ${lindo(tipo.dataset.mlin)}`);
