@@ -149,7 +149,7 @@ function pintarAcabados(c) {
     $("fp-" + j).textContent = pes(porCantidad(c.por[a].pesos, c.k));
     $("fu-" + j).textContent = `U$S ${num(c.por[a].usd)}${c.k > 1 ? ` · ${pes(c.por[a].pesos / c.k)} c/u` : ""}`;
   });
-  $("fin-resumen").textContent = `${c.k > 1 ? `Total de ${c.k} ventanas. ` : ""}Aluminio ${num(c.kg, 3)} kg · Accesorios U$S ${num(c.acc)} · Vidrio U$S ${num(c.vid)}` +
+  $("fin-resumen").textContent = `${c.k > 1 ? `Total de ${c.k} ventanas. ` : ""}Aluminio ${num(c.kg, 3)} kg · Accesorios U$S ${num(c.acc)} · ${esAcrilico(F.vid.tipo) ? "Acrílico" : "Vidrio"} U$S ${num(c.vid)}` +
     ((c.mo || c.ex) ? ` · Mano de obra ${pes(c.mo)} · Extras ${pes(c.ex)} (incluidos)` : "");
 }
 

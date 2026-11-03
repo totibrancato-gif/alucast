@@ -48,7 +48,7 @@ function render() {
     return `<tr>
       <td>${i + 1}</td>
       <td><b>${c.k} ×</b> ${esc(it.nombre)}${med ? " · " + med : ""}<span class="chip">${esc(it.linea)}</span><span class="chip">${esc(it.acabado)}</span>${conMosquitero(it) ? `<span class="chip">Con mosquitero</span>` : ""}${it.obs?.trim() ? `<span class="chip">${esc(it.obs.trim())}</span>` : ""}
-        <div class="d">${num(c.kg, 2)} kg aluminio${c.porUnidad ? (c.unidades ? ` · ${num(c.unidades, 0)} unid. ${esc(it.vid.tipo)}` : "") : (c.m2 ? ` · ${num(c.m2)} m² vidrio${it.vid?.tipo ? " " + esc(it.vid.tipo) : ""}` : "")}${(c.mo || c.ex) ? ` · M. de obra y extras ${pes(c.mo + c.ex)}` : ""}</div>
+        <div class="d">${num(c.kg, 2)} kg aluminio${c.porUnidad ? (c.unidades ? ` · ${num(c.unidades, 0)} unid. ${esc(it.vid.tipo)}` : "") : (c.m2 ? ` · ${num(c.m2)} m² ${esc(textoVidrio(it.vid?.tipo))}` : "")}${(c.mo || c.ex) ? ` · M. de obra y extras ${pes(c.mo + c.ex)}` : ""}</div>
         ${det ? `<div class="d">Por ventana: ${det}</div>` : ""}</td>
       <td class="n">${dinero(pc.out[i], pc.moneda)}</td>
       <td class="acciones"><button class="btn ghost sm" data-edit="${i}" aria-label="Editar ventana ${i + 1}">Editar</button><button class="x" data-del="${i}" aria-label="Quitar ventana ${i + 1}">×</button></td>

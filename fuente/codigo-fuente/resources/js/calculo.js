@@ -23,6 +23,10 @@ const vidrioPorUnidad = tipo => !!(P.vidrios || []).find(x => x.n === tipo)?.uni
 const accUsd = (n, lin) => L(lin).accesorios.find(a => a.n === n)?.usd ?? 0;
 /** Cantidad de ventanas iguales (mínimo 1). */
 const cantV = v => Math.max(1, parseInt(v.cant) || 1);
+/** ¿Ese tipo es acrílico? (con o sin tilde) */
+const esAcrilico = tipo => /acr[ií]lico/i.test(tipo || "");
+/** Cómo se nombra en el detalle: "vidrio 4mm", pero el acrílico no es vidrio: "acrílico". */
+const textoVidrio = tipo => esAcrilico(tipo) ? "acrílico" : ("vidrio " + (tipo || "")).trim();
 /** ¿La ventana lleva mosquitero? (tiene metros cargados en algún perfil "HOJA MOSQUITERO…") */
 const conMosquitero = v => (v.alu || []).some(l => /hoja\s+mosquitero/i.test(l.n) && +l.m > 0);
 /** Total de k ventanas iguales: el precio de una, redondeado, por la cantidad (así "c/u × k" da justo). */
