@@ -223,7 +223,7 @@ td.menos { color: var(--danger); font-weight: 600; }
 .logo span { color: var(--accent); }
 .sub { color: var(--muted); font-size: .9rem; letter-spacing: .02em; }
 .tabs { display: flex; gap: 4px; flex-wrap: wrap; }
-.tabs.lineas { margin-bottom: 10px; }
+select.lineas { margin-bottom: 10px; }
 .tab {
   font: 600 .9rem var(--body); background: none; border: 1px solid var(--line); color: var(--fg);
   padding: 8px 14px; border-radius: 4px; cursor: pointer;
