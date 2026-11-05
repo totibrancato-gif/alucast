@@ -88,11 +88,13 @@ function generarPDF() {
     const k = cantV(it);
     const vidrio = (+it.vid?.cant && it.vid?.tipo) ? textoVidrio(it.vid.tipo) : "";
     const mosquitero = conMosquitero(it) ? "con mosquitero" : "";
-    const detalle = [`Línea ${it.linea}`, `acabado ${it.acabado.toLowerCase()}`, mosquitero, it.obs?.trim(), vidrio, medidas(it)].filter(Boolean).join(" · ");
+    const detalle = [`Línea ${it.linea}`, `acabado ${it.acabado.toLowerCase()}`, mosquitero, it.obs?.trim(), vidrio].filter(Boolean).join(" · ");
     fuente("normal", 8.2);
     const lineasDet = doc.splitTextToSize(detalle, anchoDesc);
     fuente("bold", 10);
-    const lineasNom = doc.splitTextToSize(it.nombre || `Ventana ${i + 1}`, anchoDesc);
+    // La medida va pegada al nombre, para que se vea enseguida de qué ventana se trata
+    const nombre = [it.nombre || `Ventana ${i + 1}`, medidas(it)].filter(Boolean).join(" · ");
+    const lineasNom = doc.splitTextToSize(nombre, anchoDesc);
     const alto = lineasNom.length * 4.6 + lineasDet.length * 3.8 + 3;
     if (y + alto > FIN) nuevaPagina();
 
