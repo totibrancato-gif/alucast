@@ -326,6 +326,14 @@ td .d { color: var(--muted); font-size: .8rem; }
 .totals .grand { border-top: 2px solid var(--fg); margin-top: 6px; padding-top: 8px; font-family: var(--display); font-stretch: 85%; font-weight: 800; font-size: 1.5rem; }
 .totals .chico { color: var(--muted); font-size: .8rem; }
 .extra-row { display: grid; grid-template-columns: minmax(0, 1fr) 120px auto; gap: 6px; align-items: center; margin-bottom: 6px; }
+
+/* Conjuntos: varias ventanas con un solo precio */
+label.marcar { flex-direction: row; align-items: center; gap: 6px; font-size: .9rem; font-weight: 500; color: var(--fg); text-transform: none; letter-spacing: 0; cursor: pointer; }
+label.marcar input { width: 18px; height: 18px; margin: 0; }
+tr.conjunto td { background: var(--accent-soft); border-bottom-color: var(--accent); }
+tr.en-conjunto td:nth-child(2) { padding-left: 22px; }
+.juntar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px; margin-top: 10px; padding: 10px; border: 1px solid var(--accent); border-radius: 6px; background: var(--accent-soft); }
+.juntar label { flex: 1 1 180px; }
 .extra-row input[data-pesos] { text-align: right; font-variant-numeric: tabular-nums; }
 #copia { width: 100%; height: 170px; margin-top: 10px; }
 

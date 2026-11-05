@@ -34,7 +34,8 @@ function generarPDF() {
   const negocio = (EMP.nombre || "").trim();
   const tel = (EMP.tel || "").trim(), dir = (EMP.dir || "").trim(), extra = (EMP.extra || "").trim();
   const specs = [...String(EMP.condiciones || "").split("\n"), ...especs.map(e => e.t)].map(s => s.trim()).filter(Boolean);
-  const conUnitario = items.some(it => cantV(it) > 1);
+  const filas = filasPresupuesto();
+  const conUnitario = filas.some(f => !f.conjunto && cantV(items[f.idx[0]]) > 1);
 
   const color = (rgb, tipo = "text") => tipo === "text" ? doc.setTextColor(...rgb) : tipo === "fill" ? doc.setFillColor(...rgb) : doc.setDrawColor(...rgb);
   const fuente = (estilo, tam) => { doc.setFont("helvetica", estilo); doc.setFontSize(tam); };
@@ -84,27 +85,39 @@ function generarPDF() {
   const nuevaPagina = () => { doc.addPage(); y = M + 8; cabecera(); };
   cabecera();
 
-  items.forEach((it, i) => {
-    const k = cantV(it);
+  /** Tipo, acabado, mosquitero, observaciones y vidrio de una ventana. */
+  const detalleDe = it => {
     const vidrio = (+it.vid?.cant && it.vid?.tipo) ? textoVidrio(it.vid.tipo) : "";
     const mosquitero = conMosquitero(it) ? "con mosquitero" : "";
-    const detalle = [`Línea ${it.linea}`, `acabado ${it.acabado.toLowerCase()}`, mosquitero, it.obs?.trim(), vidrio].filter(Boolean).join(" · ");
+    return [`Línea ${it.linea}`, `acabado ${it.acabado.toLowerCase()}`, mosquitero, it.obs?.trim(), vidrio].filter(Boolean).join(" · ");
+  };
+
+  filas.forEach((f, n) => {
+    const it = items[f.idx[0]];
+    const k = f.conjunto ? 1 : cantV(it);
+    const importe = f.idx.reduce((s, j) => s + pc.out[j], 0);
     fuente("normal", 8.2);
-    const lineasDet = doc.splitTextToSize(detalle, anchoDesc);
+    // Un conjunto lleva debajo cada ventana que lo forma (con su medida); una ventana sola, su detalle
+    const lineasDet = f.conjunto
+      ? f.idx.flatMap(j => {
+          const v = items[j], kv = cantV(v);
+          return doc.splitTextToSize("• " + [(kv > 1 ? kv + " × " : "") + v.nombre, medidas(v), detalleDe(v)].filter(Boolean).join(" · "), anchoDesc);
+        })
+      : doc.splitTextToSize(detalleDe(it), anchoDesc);
     fuente("bold", 10);
     // La medida va pegada al nombre, para que se vea enseguida de qué ventana se trata
-    const nombre = [it.nombre || `Ventana ${i + 1}`, medidas(it)].filter(Boolean).join(" · ");
+    const nombre = f.conjunto || [it.nombre || `Ventana ${n + 1}`, medidas(it)].filter(Boolean).join(" · ");
     const lineasNom = doc.splitTextToSize(nombre, anchoDesc);
     const alto = lineasNom.length * 4.6 + lineasDet.length * 3.8 + 3;
     if (y + alto > FIN) nuevaPagina();
 
-    fuente("normal", 9.5); color(PDF_COL.suave); doc.text(String(i + 1), colNum, y);
+    fuente("normal", 9.5); color(PDF_COL.suave); doc.text(String(n + 1), colNum, y);
     fuente("bold", 10); color(PDF_COL.texto); doc.text(lineasNom, M + 10, y);
     fuente("normal", 8.2); color(PDF_COL.suave); doc.text(lineasDet, M + 10, y + lineasNom.length * 4.6 - 0.6);
     fuente("normal", 10); color(PDF_COL.texto);
     doc.text(String(k), colCant, y, { align: "right" });
-    if (conUnitario) doc.text(dinero(pc.out[i] / k, pc.moneda), colUni, y, { align: "right" });
-    doc.text(dinero(pc.out[i], pc.moneda), colImp, y, { align: "right" });
+    if (conUnitario) doc.text(dinero(importe / k, pc.moneda), colUni, y, { align: "right" });
+    doc.text(dinero(importe, pc.moneda), colImp, y, { align: "right" });
     y += alto;
     color(PDF_COL.linea, "draw"); doc.setLineWidth(0.25); doc.line(M, y - 2.5, W - M, y - 2.5);
     y += 3;

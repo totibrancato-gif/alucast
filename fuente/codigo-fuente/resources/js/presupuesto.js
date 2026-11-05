@@ -35,26 +35,85 @@ function medidas(it) {
   return (+it.ancho && +it.alto) ? `${num(+it.ancho)} × ${num(+it.alto)} m` : "";
 }
 
+// ---- Conjuntos: varias ventanas que se cobran con un solo precio ----
+// Cada ventana de un conjunto lleva el nombre del conjunto en "conjunto". El precio de cada
+// una se sigue calculando igual; el conjunto muestra la suma, en el lugar de la primera.
+let seleccion = new Set(); // ventanas marcadas para juntar (por posición)
+
+/** Un conjunto de una sola ventana ya no es conjunto. */
+function limpiarConjuntos() {
+  const cuenta = {};
+  items.forEach(it => { if (it.conjunto) cuenta[it.conjunto] = (cuenta[it.conjunto] || 0) + 1; });
+  items.forEach(it => { if (it.conjunto && cuenta[it.conjunto] < 2) delete it.conjunto; });
+}
+
+/** Filas del presupuesto: cada ventana sola, o un conjunto con todas sus ventanas. */
+function filasPresupuesto() {
+  const filas = [], vistos = new Set();
+  items.forEach((it, i) => {
+    if (!it.conjunto) { filas.push({ idx: [i] }); return; }
+    if (vistos.has(it.conjunto)) return;
+    vistos.add(it.conjunto);
+    filas.push({ conjunto: it.conjunto, idx: items.flatMap((x, j) => x.conjunto === it.conjunto ? [j] : []) });
+  });
+  return filas;
+}
+
+/** Nombre que se propone al juntar: lo que tienen en común ("FV1 - PUERTA" y "FV1 - GUILLOTINA" → "FV1"). */
+function nombreConjunto(idx) {
+  const nombres = idx.map(i => items[i].nombre.trim());
+  let comun = nombres.reduce((a, n) => { let k = 0; while (k < a.length && k < n.length && a[k] === n[k]) k++; return a.slice(0, k); });
+  comun = comun.replace(/[\s\-–·,:]+$/, "").trim();
+  return comun.length >= 2 ? comun : "Conjunto " + (new Set(items.map(it => it.conjunto).filter(Boolean)).size + 1);
+}
+
+/** La barra "Juntar en un solo precio" aparece cuando hay 2 o más ventanas marcadas. */
+function pintarJuntar() {
+  const n = seleccion.size, barra = $("juntar");
+  const estaba = !barra.hidden;
+  barra.hidden = n < 2;
+  $("juntar-info").textContent = n === 1 ? "Marcá otra ventana para juntarlas." : "";
+  $("juntar-info").hidden = n !== 1;
+  if (n >= 2 && !estaba) $("juntar-nombre").value = nombreConjunto([...seleccion].sort((a, b) => a - b));
+}
+
+function filaVentana(it, i, pc, enConjunto) {
+  const c = calc(it);
+  const det = it.alu.filter(l => +l.m).map(l => `${esc(l.n.toLowerCase())} ${num(+l.m)} m`).join(" · ");
+  const med = medidas(it);
+  const marca = enConjunto ? `<span class="muted">${i + 1}</span>`
+    : `<label class="marcar"><input type="checkbox" data-sel="${i}"${seleccion.has(i) ? " checked" : ""} aria-label="Marcar ventana ${i + 1} para juntar">${i + 1}</label>`;
+  return `<tr${enConjunto ? ' class="en-conjunto"' : ""}>
+      <td>${marca}</td>
+      <td><b>${c.k} ×</b> ${esc(it.nombre)}${med ? " · " + med : ""}<span class="chip">${esc(it.linea)}</span><span class="chip">${esc(it.acabado)}</span>${conMosquitero(it) ? `<span class="chip">Con mosquitero</span>` : ""}${it.obs?.trim() ? `<span class="chip">${esc(it.obs.trim())}</span>` : ""}
+        <div class="d">${num(c.kg, 2)} kg aluminio${c.porUnidad ? (c.unidades ? ` · ${num(c.unidades, 0)} unid. ${esc(it.vid.tipo)}` : "") : (c.m2 ? ` · ${num(c.m2)} m² ${esc(textoVidrio(it.vid?.tipo))}` : "")}${(c.mo || c.ex) ? ` · M. de obra y extras ${pes(c.mo + c.ex)}` : ""}</div>
+        ${det ? `<div class="d">Por ventana: ${det}</div>` : ""}</td>
+      <td class="n">${enConjunto ? `<span class="muted d">${dinero(pc.out[i], pc.moneda)}</span>` : dinero(pc.out[i], pc.moneda)}</td>
+      <td class="acciones"><button class="btn ghost sm" data-edit="${i}" aria-label="Editar ventana ${i + 1}">Editar</button><button class="x" data-del="${i}" aria-label="Quitar ventana ${i + 1}">×</button></td>
+    </tr>`;
+}
+
 function render() {
   $("q-num").textContent = nro(numero);
   $("q-fecha").textContent = fechaTxt();
   $("q-cli").textContent = $("c-nombre").value || "Cliente sin nombre";
 
+  limpiarConjuntos();
+  seleccion = new Set([...seleccion].filter(i => items[i] && !items[i].conjunto));
   const pc = preciosCliente();
-  $("items").innerHTML = items.length ? items.map((it, i) => {
-    const c = calc(it);
-    const det = it.alu.filter(l => +l.m).map(l => `${esc(l.n.toLowerCase())} ${num(+l.m)} m`).join(" · ");
-    const med = medidas(it);
-    return `<tr>
-      <td>${i + 1}</td>
-      <td><b>${c.k} ×</b> ${esc(it.nombre)}${med ? " · " + med : ""}<span class="chip">${esc(it.linea)}</span><span class="chip">${esc(it.acabado)}</span>${conMosquitero(it) ? `<span class="chip">Con mosquitero</span>` : ""}${it.obs?.trim() ? `<span class="chip">${esc(it.obs.trim())}</span>` : ""}
-        <div class="d">${num(c.kg, 2)} kg aluminio${c.porUnidad ? (c.unidades ? ` · ${num(c.unidades, 0)} unid. ${esc(it.vid.tipo)}` : "") : (c.m2 ? ` · ${num(c.m2)} m² ${esc(textoVidrio(it.vid?.tipo))}` : "")}${(c.mo || c.ex) ? ` · M. de obra y extras ${pes(c.mo + c.ex)}` : ""}</div>
-        ${det ? `<div class="d">Por ventana: ${det}</div>` : ""}</td>
-      <td class="n">${dinero(pc.out[i], pc.moneda)}</td>
-      <td class="acciones"><button class="btn ghost sm" data-edit="${i}" aria-label="Editar ventana ${i + 1}">Editar</button><button class="x" data-del="${i}" aria-label="Quitar ventana ${i + 1}">×</button></td>
-    </tr>`;
+  $("items").innerHTML = items.length ? filasPresupuesto().map(f => {
+    if (!f.conjunto) return filaVentana(items[f.idx[0]], f.idx[0], pc, false);
+    const total = f.idx.reduce((s, j) => s + pc.out[j], 0);
+    return `<tr class="conjunto">
+        <td></td>
+        <td><b>${esc(f.conjunto)}</b><span class="chip">Un solo precio</span>
+          <div class="d">${f.idx.length} ventanas juntas: ${f.idx.map(j => esc(items[j].nombre)).join(" · ")}</div></td>
+        <td class="n"><b>${dinero(total, pc.moneda)}</b></td>
+        <td class="acciones"><button class="btn ghost sm" data-separar="${esc(f.conjunto)}">Separar</button></td>
+      </tr>` + f.idx.map(j => filaVentana(items[j], j, pc, true)).join("");
   }).join("")
     : `<tr><td colspan="4" class="empty">Todavía no hay ventanas. Cargá los metros a la izquierda y tocá "Guardar ventana en el presupuesto".</td></tr>`;
+  pintarJuntar();
 
   const t = totals(), enPesos = preciosCliente("UYU").total;
   // Botones "Precio en: $ Pesos / U$S Dólares"
@@ -97,11 +156,20 @@ function estaGuardado() {
 function textoWhatsApp() {
   const pc = preciosCliente();
   let s = `*${(EMP.nombre || "Alucast").toUpperCase()} · Presupuesto ${nro(numero)}*\n${fechaTxt()}\nCliente: ${$("c-nombre").value || "-"}\n\n`;
-  items.forEach((it, i) => {
-    const med = medidas(it).replace(" × ", "x"), k = cantV(it);
-    const d = n => dinero(n, pc.moneda);
+  const d = n => dinero(n, pc.moneda);
+  const ventana = it => {
+    const med = medidas(it).replace(" × ", "x");
+    return `${cantV(it)} x ${it.nombre}${med ? " " + med : ""} (${it.linea}, ${it.acabado.toLowerCase()}${conMosquitero(it) ? ", con mosquitero" : ""}${it.obs?.trim() ? ", " + it.obs.trim() : ""})`;
+  };
+  filasPresupuesto().forEach((f, n) => {
+    if (f.conjunto) {
+      // Un conjunto: un solo precio y debajo las ventanas que lo forman
+      s += `${n + 1}. ${f.conjunto}: ${d(f.idx.reduce((t, j) => t + pc.out[j], 0))}\n` + f.idx.map(j => `   - ${ventana(items[j])}\n`).join("");
+      return;
+    }
+    const i = f.idx[0], k = cantV(items[i]);
     const precio = k > 1 ? `${d(pc.out[i] / k)} c/u = ${d(pc.out[i])}` : d(pc.out[i]);
-    s += `${i + 1}. ${k} x ${it.nombre}${med ? " " + med : ""} (${it.linea}, ${it.acabado.toLowerCase()}${conMosquitero(it) ? ", con mosquitero" : ""}${it.obs?.trim() ? ", " + it.obs.trim() : ""}): ${precio}\n`;
+    s += `${n + 1}. ${ventana(items[i])}: ${precio}\n`;
   });
   s += `\n*PRECIO FINAL: ${dinero(pc.total, pc.moneda)}${IVA_INC}*`;
   const specs = [...String(EMP.condiciones || "").split("\n"), ...especs.map(e => e.t)].map(x => x.trim()).filter(Boolean);
@@ -154,10 +222,35 @@ $("extras").onclick = e => {
   if (i !== undefined) { extras.splice(+i, 1); renderExtras(); render(); }
 };
 
+// Marcar ventanas para juntarlas en un solo precio
+$("items").addEventListener("change", e => {
+  const i = e.target.dataset.sel;
+  if (i === undefined) return;
+  if (e.target.checked) seleccion.add(+i); else seleccion.delete(+i);
+  pintarJuntar();
+});
+$("juntar-btn").onclick = () => {
+  const nombre = $("juntar-nombre").value.trim();
+  if (!nombre) { toast("Poné un nombre para el conjunto"); $("juntar-nombre").focus(); return; }
+  // Si ya hay un conjunto con ese nombre, las ventanas se suman a él
+  seleccion.forEach(i => { if (items[i]) items[i].conjunto = nombre; });
+  seleccion.clear();
+  render();
+  toast(`Juntadas en "${nombre}" con un solo precio`);
+};
+$("juntar-cancelar").onclick = () => { seleccion.clear(); render(); };
+
 $("items").onclick = e => {
   const d = e.target.dataset;
+  if (d.separar !== undefined) {
+    items.forEach(it => { if (it.conjunto === d.separar) delete it.conjunto; });
+    render();
+    toast(`"${d.separar}" separado: cada ventana con su precio`);
+    return;
+  }
   if (d.del !== undefined) {
     const i = +d.del;
+    seleccion.clear();
     items.splice(i, 1);
     // Si se estaba editando esa ventana, se cancela; si era una posterior, se corre el índice.
     if (editIdx === i) { editIdx = -1; F = blank(); renderForm(); }
