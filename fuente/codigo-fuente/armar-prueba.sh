@@ -22,9 +22,9 @@ perl -MJSON::PP -e '
   my $fin = index($html, q{<script src="js/});
   my $cuerpo = substr($html, $ini, $fin - $ini);
   $cuerpo =~ s/^\s+|\s+$//g;
-  # En el link no hace falta jsPDF (no se pueden descargar archivos) ni la nube
-  my @scripts = grep { !/^(neutralino|jspdf\.umd\.min|nube)\.js$/ } ($html =~ /<script src="js\/([^"]+)"><\/script>/g);
-  $cuerpo =~ s{<div class="wrap">}{<div class="wrap">\n  <p class="aviso-prueba"><b>Versión de prueba.</b> Lo que cargues acá se guarda aparte de tu app. El PDF y la copia de seguridad solo funcionan en la app.</p>};
+  # En el link no va la nube; jsPDF se carga de cdnjs (el PDF se baja con el permiso "downloads" del link)
+  my @scripts = grep { !/^(neutralino|nube)\.js$/ } ($html =~ /<script src="js\/([^"]+)"><\/script>/g);
+  $cuerpo =~ s{<div class="wrap">}{<div class="wrap">\n  <p class="aviso-prueba"><b>Versión de prueba.</b> Lo que cargues acá se guarda aparte de tu app. La copia de seguridad solo funciona en la app.</p>};
 
   my $css = leer("$origen/css/estilos.css");
   $css =~ s/^\@font-face[^\n]*\n//mg;
@@ -52,12 +52,37 @@ FIN
        . "  } catch (e) { /* sin acceso al guardado: arranca vacío */ }\n})();\n</script>\n";
   }
   for my $f (@scripts) {
+    if ($f eq "jspdf.umd.min.js") {
+      $s .= qq{<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>\n};
+      next;
+    }
     my $js = leer("$origen/js/$f");
     die "$f contiene </script" if $js =~ m{</script}i;
     $js .= "\n" unless $js =~ /\n\z/;
     $s .= "<script>/* $f */\n$js</script>\n";
   }
-  $s .= qq{<script>/* solo en el link de prueba */\n\$("btn-pdf").onclick = () => toast("En el link de prueba no se puede hacer el PDF. Usalo desde la app.");\n\$("bk-exp").onclick = () => toast("En el link de prueba no se puede exportar la copia. Usalo desde la app.");\n</script>\n};
+  $s .= <<\FIN;
+<script>/* solo en el link de prueba */
+// El PDF se baja con el permiso "downloads" del link (el link pide confirmación antes de guardar)
+const descargas = window.claude?.use ? window.claude.use("downloads").catch(() => null) : Promise.resolve(null);
+$("btn-pdf").onclick = async () => {
+  if (!items.length) { toast("Agregá al menos una ventana"); return; }
+  if (!window.jspdf) { toast("No se pudo cargar el generador de PDF. Revisá la conexión y recargá."); return; }
+  const d = await descargas;
+  if (!d) { toast("En este link no se puede descargar el PDF."); return; }
+  let doc;
+  try { doc = generarPDF(); } catch (e) { console.error(e); toast("No se pudo armar el PDF"); return; }
+  try {
+    await d.save({ filename: nombrePDF(), data: new Blob([doc.output("arraybuffer")]) });
+    toast("PDF descargado: " + nombrePDF());
+  } catch (e) {
+    if (e?.code === "declined") return;
+    toast(e?.code === "rate_limited" ? "Esperá un momento y probá de nuevo" : "No se pudo descargar el PDF (" + (e?.code || e) + ")");
+  }
+};
+$("bk-exp").onclick = () => toast("En el link de prueba no se puede exportar la copia. Usalo desde la app.");
+</script>
+FIN
   open my $o, ">:raw", $salida or die; print $o $s; close $o;
   printf "Listo: %s (%d KB, %d scripts)\n", $salida, (-s $salida) / 1024, scalar @scripts;
 ' "$aqui/resources" "$destino/alucast-prueba.html" "${1:-}"
