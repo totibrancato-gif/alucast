@@ -147,8 +147,10 @@ function pintarAcabados(c) {
   acabados.forEach((a, j) => {
     fin.querySelectorAll('input[name="acabado"]')[j].checked = F.acabado === a;
     $("fa-" + j).textContent = `${c.k > 1 ? c.k + " ventanas" : "Ventana"} en ${a.toLowerCase()}`;
-    $("fp-" + j).textContent = pes(porCantidad(c.por[a].pesos, c.k));
-    $("fu-" + j).textContent = `U$S ${num(c.por[a].usd)}${c.k > 1 ? ` · ${pes(c.por[a].pesos / c.k)} c/u` : ""}`;
+    const total = porCantidad(c.por[a].pesos, c.k);
+    $("fp-" + j).textContent = pes(total);
+    // En dólares, el mismo precio total (con mano de obra y extras), pasado al dólar cargado
+    $("fu-" + j).textContent = `U$S ${num(total / (+P.dolar || 1))}${c.k > 1 ? ` · ${pes(total / c.k)} c/u` : ""}`;
   });
   $("fin-resumen").textContent = `${c.k > 1 ? `Total de ${c.k} ventanas. ` : ""}Aluminio ${num(c.kg, 3)} kg · Accesorios U$S ${num(c.acc)} · ${esAcrilico(F.vid.tipo) ? "Acrílico" : "Vidrio"} U$S ${num(c.vid)}` +
     ((c.mo || c.ex) ? ` · Mano de obra ${pes(c.mo)} · Extras ${pes(c.ex)} (incluidos)` : "");
