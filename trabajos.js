@@ -15,6 +15,21 @@ function updBadge() {
 }
 
 const btnBorrar = q => `<button class="btn warn sm" data-borrar="${q.num}">Eliminar</button>`;
+const btnDuplicar = q => `<button class="btn ghost sm" data-duplicar="${q.num}" aria-label="Duplicar el presupuesto ${q.num}">Duplicar</button>`;
+
+/**
+ * Guarda una copia de un presupuesto con el número siguiente y la fecha de hoy.
+ * La copia queda en "Guardados" (sin aceptar ni entregar). Devuelve el número nuevo.
+ */
+function duplicar(num) {
+  const q = historial().find(x => x.num === num);
+  if (!q) return null;
+  const n = siguienteNumero();
+  const { estado, entrega, aceptadoEl, entregadoEl, ...resto } = q;
+  updHist(h => h.push({ ...structuredClone(resto), num: n, fecha: hoy(), fechaTxt: dmy(hoy()) }));
+  save(CLAVES.numero, n); // ese número ya está usado
+  return n;
+}
 
 const confBorrar = q => borrando !== q.num ? "" : `<div class="acept" role="alertdialog" aria-labelledby="cb-${q.num}">
     <span id="cb-${q.num}">¿Eliminar el presupuesto ${nro(q.num)}${q.cli ? ` de ${esc(q.cli)}` : ""}? No se puede deshacer.</span>
@@ -54,6 +69,7 @@ function renderHist() {
       <div class="actions">
         <button class="btn ghost sm" data-open="${q.num}">Abrir</button>
         <button class="btn sm" data-acep="${q.num}">Aceptado</button>
+        ${btnDuplicar(q)}
         ${btnBorrar(q)}
       </div>
       ${aceptando === q.num ? formFecha(q, "acep") : ""}${confBorrar(q)}${confAbrir(q)}
@@ -103,6 +119,7 @@ function renderEnt() {
         <button class="btn ghost sm" data-cambiar="${q.num}">Cambiar fecha</button>
         <button class="btn sm" data-entregado="${q.num}">Entregado</button>
         <button class="btn ghost sm" data-volver="${q.num}">Volver a guardados</button>
+        ${btnDuplicar(q)}
         ${btnBorrar(q)}
       </div>
       ${cambiando === q.num ? formFecha(q, "camb") : ""}${confBorrar(q)}${confAbrir(q)}
@@ -118,6 +135,7 @@ function renderEnt() {
       <div class="actions fila">
         <button class="btn ghost sm" data-open="${q.num}">Abrir</button>
         <button class="btn ghost sm" data-reabrir="${q.num}">Pasar a por entregar</button>
+        ${btnDuplicar(q)}
         ${btnBorrar(q)}
       </div>
       ${confBorrar(q)}${confAbrir(q)}
@@ -156,6 +174,13 @@ function accionesTrabajos(e) {
     aceptando = cambiando = borrando = abriendo = null;
     renderTrabajos();
     if (volver) enfocar(volver);
+    return;
+  }
+  if (d.duplicar) {
+    const n = duplicar(+d.duplicar);
+    aceptando = cambiando = borrando = abriendo = null;
+    renderTrabajos();
+    if (n) { toast(`Copia guardada como ${nro(n)}`); enfocar(`[data-open="${n}"]`); }
     return;
   }
   if (d.borrar) {
