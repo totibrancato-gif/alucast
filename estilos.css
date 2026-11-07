@@ -257,6 +257,9 @@ h3 small { text-transform: none; letter-spacing: 0; font-weight: 500; font-size:
 .fields.anchos { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
 label { display: flex; flex-direction: column; gap: 4px; font-size: .8rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
 label.ancho-total { grid-column: 1 / -1; }
+/* Casilla con su texto al lado (ej.: "Esta ventana no lleva vidrio") */
+label.check { flex-direction: row; align-items: center; gap: 8px; margin: 0 0 10px; font-size: .95rem; font-weight: 500; color: var(--fg); text-transform: none; letter-spacing: 0; cursor: pointer; }
+label.check input { width: 18px; height: 18px; margin: 0; }
 input, select, textarea {
   font: 500 .95rem var(--body); color: var(--fg); background: var(--bg);
   border: 1px solid var(--field-line); border-radius: 4px; padding: 8px 10px; width: 100%; min-width: 0;
