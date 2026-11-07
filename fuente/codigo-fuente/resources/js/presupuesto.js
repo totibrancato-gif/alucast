@@ -30,6 +30,9 @@ function renderEspecs() {
     </div>`).join("");
 }
 
+/** El color (acabado) como lo ve el cliente, con mayúscula: "Blanco". */
+const nombreColor = a => { const s = String(a || "").trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
+
 /** Detalle de una ventana para mostrar: "2 × Dormitorio · 1,20 × 1,00 m". */
 function medidas(it) {
   return (+it.ancho && +it.alto) ? `${num(+it.ancho)} × ${num(+it.alto)} m` : "";
@@ -159,7 +162,7 @@ function textoWhatsApp() {
   const d = n => dinero(n, pc.moneda);
   const ventana = it => {
     const med = medidas(it).replace(" × ", "x");
-    return `${cantV(it)} x ${it.nombre}${med ? " " + med : ""} (${it.linea}, ${it.acabado.toLowerCase()}${conMosquitero(it) ? ", con mosquitero" : ""}${it.obs?.trim() ? ", " + it.obs.trim() : ""})`;
+    return `${cantV(it)} x ${it.nombre}${med ? " " + med : ""} (${it.linea}, ${nombreColor(it.acabado)}${conMosquitero(it) ? ", con mosquitero" : ""}${it.obs?.trim() ? ", " + it.obs.trim() : ""})`;
   };
   filasPresupuesto().forEach((f, n) => {
     if (f.conjunto) {

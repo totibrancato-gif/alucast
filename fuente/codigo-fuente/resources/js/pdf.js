@@ -89,7 +89,7 @@ function generarPDF() {
   const detalleDe = it => {
     const vidrio = (!it.sinVidrio && +it.vid?.cant && it.vid?.tipo) ? textoVidrio(it.vid.tipo) : "";
     const mosquitero = conMosquitero(it) ? "con mosquitero" : "";
-    return [`Línea ${it.linea}`, `terminación ${it.acabado.toLowerCase()}`, mosquitero, it.obs?.trim(), vidrio].filter(Boolean).join(" · ");
+    return [`Línea ${it.linea}`, `Terminación ${nombreColor(it.acabado)}`, mosquitero, it.obs?.trim(), vidrio].filter(Boolean).join(" · ");
   };
 
   filas.forEach((f, n) => {
