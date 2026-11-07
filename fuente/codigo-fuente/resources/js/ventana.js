@@ -49,6 +49,7 @@ function renderForm() {
   $("g-cant").value = F.vid.cant;
   $("g-ancho").value = F.vid.ancho;
   $("g-alto").value = F.vid.alto;
+  pintarSinVidrio();
   notaVid();
   $("nota-barra").textContent = P.cobrarBarra
     ? `Se cobran barras enteras de ${num(P.barra, 2)} m (se cambia en Lista de precios → Parámetros).`
@@ -77,6 +78,13 @@ function vidAuto() {
   if (h) F.vid.alto = r3(Math.max(0, h - (+l.descH || 0)));
   else if (F.alto === "") F.vid.alto = "";
   if ((a || h) && F.vid.cant === "") F.vid.cant = "1";
+}
+
+/** "No lleva vidrio": se ocultan los campos del vidrio (lo cargado se conserva por si se desmarca). */
+function pintarSinVidrio() {
+  $("v-sinvidrio").checked = !!F.sinVidrio;
+  $("vid-campos").hidden = !!F.sinVidrio;
+  $("nota-vid").hidden = !!F.sinVidrio;
 }
 
 function notaVid() {
@@ -177,6 +185,7 @@ $("form-ventana").addEventListener("input", e => {
   if (el.id === "v-mo") { F.mo = el.value; avisoMo(false); updateForm(); return; }
   if (d.vx !== undefined) { F.exs[+d.vx][d.f] = el.value; avisoMo(false); updateForm(); return; }
   if (el.id === "v-cant") { F.cant = el.value; updateForm(); return; }
+  if (el.id === "v-sinvidrio") { F.sinVidrio = el.checked; pintarSinVidrio(); updateForm(); return; }
   if (el.id === "v-ancho" || el.id === "v-alto") {
     F[el.id.slice(2)] = el.value;
     // Si el vidrio no se cargó a mano, se recalcula con el descuento del tipo de ventana.
@@ -244,7 +253,7 @@ function cambiarLinea(n) {
     : (anterior && F.vid.tipo === anterior) ? vidrioPorDefecto(n) : F.vid.tipo;
   nuevo.vid = { ...F.vid, tipo };
   nuevo.cant = F.cant; nuevo.ancho = F.ancho; nuevo.alto = F.alto;
-  nuevo.mo = F.mo; nuevo.exs = F.exs; nuevo.vidManual = F.vidManual;  F = nuevo;
+  nuevo.mo = F.mo; nuevo.exs = F.exs; nuevo.vidManual = F.vidManual; nuevo.sinVidrio = F.sinVidrio;  F = nuevo;
   if (!F.vidManual) vidAuto(); // cada tipo de ventana tiene su propio descuento
   renderForm();
 }

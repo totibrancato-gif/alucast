@@ -60,10 +60,12 @@ function calc(v) {
   const k = cantV(v);
   const kg = v.alu.reduce((s, l) => s + lineaAlu(l, v.linea, k).kg, 0);
   const acc = v.acc.reduce((s, l) => s + (+l.q || 0) * accUsd(l.n, v.linea), 0) * k;
-  const m2 = (+v.vid.cant || 0) * (+v.vid.ancho || 0) * (+v.vid.alto || 0) * k;
+  // "No lleva vidrio": no se cobra ni se muestra (lo cargado queda guardado por si se vuelve a marcar)
+  const paños = v.sinVidrio ? 0 : (+v.vid.cant || 0);
+  const m2 = paños * (+v.vid.ancho || 0) * (+v.vid.alto || 0) * k;
   // Vidrio por m²; o por unidad (ej.: acrílico de la mampara): cantidad de piezas × precio
   const porUnidad = vidrioPorUnidad(v.vid.tipo);
-  const unidades = (+v.vid.cant || 0) * k;
+  const unidades = paños * k;
   const vid = (porUnidad ? unidades : m2) * precioVidrio(v.vid.tipo);
   const { mo, ex } = manoDeObra(v);
 
