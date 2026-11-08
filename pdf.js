@@ -85,11 +85,11 @@ function generarPDF() {
   const nuevaPagina = () => { doc.addPage(); y = M + 8; cabecera(); };
   cabecera();
 
-  /** Tipo, acabado, mosquitero, observaciones y vidrio de una ventana. */
+  /** Tipo, terminación (color), mosquitero, observaciones y vidrio de una ventana. */
   const detalleDe = it => {
     const vidrio = (!it.sinVidrio && +it.vid?.cant && it.vid?.tipo) ? textoVidrio(it.vid.tipo) : "";
     const mosquitero = conMosquitero(it) ? "con mosquitero" : "";
-    return [`Línea ${it.linea}`, `acabado ${it.acabado.toLowerCase()}`, mosquitero, it.obs?.trim(), vidrio].filter(Boolean).join(" · ");
+    return [`Línea ${it.linea}`, `Terminación ${nombreColor(it.acabado)}`, mosquitero, it.obs?.trim(), vidrio].filter(Boolean).join(" · ");
   };
 
   filas.forEach((f, n) => {
