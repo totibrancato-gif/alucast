@@ -220,8 +220,8 @@ async function guardarDocPDF(doc, nombre) {
 }
 
 // =========================================================================
-// PDF "Estado de cuenta" de Control de gastos: los movimientos de una cuenta
-// (caja, banco, un deudor o todos los deudores) y su saldo, en pesos y dólares.
+// PDF "Estado de cuenta" de Control de gastos: los movimientos de una cuenta (caja, banco,
+// un deudor, todos los deudores, una cuenta que debés o toda la plata que debo) y su saldo.
 // =========================================================================
 
 /** Nombre de archivo propuesto: "Estado de cuenta - Juan Pérez 2026-11-14.pdf". */
@@ -234,12 +234,14 @@ function generarEstadoCuenta(cuenta) {
   const W = 210, H = 297, M = 15, ANCHO = W - 2 * M, FIN = H - 18;
   const negocio = (EMP.nombre || "").trim();
   const tel = (EMP.tel || "").trim(), dir = (EMP.dir || "").trim(), extra = (EMP.extra || "").trim();
-  const ldeu = deudores(), idsDeu = new Set(ldeu.map(d => d.id));
+  const ldeu = deudores(), lacr = acreedores();
+  const idsDeu = new Set(ldeu.map(d => d.id)), idsAcr = new Set(lacr.map(d => d.id));
   // Del más viejo al más nuevo, como un extracto
-  const lista = movimientos().filter(m => tocaFiltro(m, cuenta, idsDeu))
+  const lista = movimientos().filter(m => tocaFiltro(m, cuenta, idsDeu, idsAcr))
     .sort((a, b) => a.fecha.localeCompare(b.fecha) || a.id.localeCompare(b.id));
-  const saldo = saldos(undefined, ldeu)[cuenta] || { UYU: 0, USD: 0 };
-  const es = id => cuenta === GRUPO_DEUDORES ? idsDeu.has(id) : id === cuenta;
+  const saldo = saldos(undefined, ldeu, lacr)[cuenta] || { UYU: 0, USD: 0 };
+  // En un grupo (todos los deudores / toda la plata que debo) se aclara de quién es cada movimiento
+  const grupo = cuenta === GRUPO_DEUDORES ? idsDeu : cuenta === GRUPO_ACREEDORES ? idsAcr : null;
 
   const color = (rgb, tipo = "text") => tipo === "text" ? doc.setTextColor(...rgb) : tipo === "fill" ? doc.setFillColor(...rgb) : doc.setDrawColor(...rgb);
   const fuente = (estilo, tam) => { doc.setFont("helvetica", estilo); doc.setFontSize(tam); };
@@ -285,9 +287,9 @@ function generarEstadoCuenta(cuenta) {
     y += 8;
   }
   lista.forEach(m => {
-    // Entra a la cuenta: +; sale de la cuenta: − (un pase entre dos deudores no cambia el total de deudores)
-    const signo = es(m.hacia) && !es(m.desde) ? "+ " : es(m.desde) && !es(m.hacia) ? "- " : "";
-    const quien = cuenta === GRUPO_DEUDORES ? nombreCuenta(es(m.hacia) ? m.hacia : m.desde) : "";
+    // Sube el saldo: +; baja: − (igual que en pantalla; en "Plata que debo", + es deber más)
+    const signo = { "+": "+ ", "−": "- " }[signoEn(m, cuenta, idsDeu, idsAcr)] || "";
+    const quien = grupo ? nombreCuenta(grupo.has(m.hacia) ? m.hacia : m.desde) : "";
     const texto = [m.desc.trim() || "Sin descripción", quien].filter(Boolean).join(" · ");
     fuente("normal", 9.5);
     const lineas = doc.splitTextToSize(texto, anchoDesc);

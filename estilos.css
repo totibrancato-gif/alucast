@@ -133,6 +133,7 @@ button.cuenta:hover { background: var(--accent-soft); }
 .cuenta-punto.caja { background: var(--c-caja); }
 .cuenta-punto.banco { background: var(--c-banco); }
 .cuenta-punto.calle { background: var(--c-calle); }
+.cuenta-punto.debo { background: var(--danger); }
 .cuenta-n { flex: 1; min-width: 0; }
 .cuenta.total .cuenta-n { padding-left: 20px; text-transform: uppercase; letter-spacing: .05em; font-size: .8rem; color: var(--muted); }
 .cuenta-v { font-family: var(--display); font-stretch: 85%; font-weight: 700; font-size: 1.05rem; font-variant-numeric: tabular-nums; white-space: nowrap; }

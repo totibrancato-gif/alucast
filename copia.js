@@ -87,7 +87,7 @@ function limpiarCopia(datos) {
     else if (k === CLAVES.gastos) {
       // Los movimientos se validan contra los deudores de la copia (más la cuenta vieja "En la calle")
       const deu = normalizarDeudores(datos[CLAVES.deudores] ?? load(CLAVES.deudores, []));
-      const validas = new Set([...idsCuentas(deu), DEUDOR_VIEJO.id]);
+      const validas = new Set([...idsCuentas(deu), DEUDOR_VIEJO.id, ACREEDOR_VIEJO.id]);
       limpio[k] = (Array.isArray(v) ? v : []).map(m => normalizarMov(m, validas)).filter(Boolean);
     }
     else if (k === CLAVES.lista) { if (v && typeof v === "object" && !Array.isArray(v)) limpio[k] = v; }

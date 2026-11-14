@@ -18,7 +18,7 @@ function renderMenuPresupuestos() {
 }
 
 function renderMenuGastos() {
-  const ldeu = deudores(), s = saldos(undefined, ldeu);
+  const ldeu = deudores(), lacr = acreedores(), s = saldos(undefined, ldeu, lacr);
   const fila = (id, nombre, punto, clase = "") => `
     <button class="cuenta ${clase}" data-mgastos="${esc(id)}">
       ${punto ? `<span class="cuenta-punto ${punto}" aria-hidden="true"></span>` : ""}
@@ -31,7 +31,9 @@ function renderMenuGastos() {
     fila(GRUPO_DEUDORES, "Deudores por ventas", "calle") +
     // Cada deudor, debajo del total de deudores (sin los que están en 0, salvo que se pidan)
     deudoresVisibles(ldeu, s).map(d => fila(d.id, d.nombre, "", "sub")).join("") +
-    `<div class="cuenta total"><span class="cuenta-n">Total</span><span class="cuenta-cols">${dosColumnas(s.total)}</span></div>
+    `<div class="cuenta total"><span class="cuenta-n">Total</span><span class="cuenta-cols">${dosColumnas(s.total)}</span></div>` +
+    fila(GRUPO_ACREEDORES, "Plata que debo", "debo") +
+    cuentasVisibles(lacr, s).map(d => fila(d.id, d.nombre, "", "sub")).join("") + `
   </div>
   <button class="btn cargar-mov" data-mgastos="">＋ Cargar movimiento</button>`;
 }
