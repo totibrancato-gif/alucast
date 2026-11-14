@@ -213,6 +213,8 @@ th.col-uyu, td.col-uyu, th.col-usd, td.col-usd { width: 9.5rem; }
 .moneda-et { font-size: .8rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
 
 .d-alta { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; margin-top: 12px; }
+/* Movimientos: "Ver" y el botón del estado de cuenta, uno al lado del otro */
+.g-ver { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; }
 .d-alta-n { flex: 1 1 220px; max-width: 360px; }
 #g-deudores .quote-head { margin-bottom: 6px; }
 #g-deudores .note.intro { margin: 4px 0 0; }
