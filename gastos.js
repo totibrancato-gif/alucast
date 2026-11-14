@@ -29,6 +29,14 @@ let tipoMov = "entrada";
 let filtroGastos = "";      // "" = todo; "caja", "banco", "deudores" o el id de un deudor
 let borrandoMov = null;     // id del movimiento que se está por borrar
 
+// Deudores con saldo 0 (en pesos y en dólares): se ocultan, salvo que se marque "Mostrar los que están en 0".
+// La preferencia queda en cada equipo (no va a la nube).
+const CLAVE_VER_CERO = "alucast-ver-deudores-en-0";
+let verDeudoresEnCero = load(CLAVE_VER_CERO, false) === true;
+const enCero = v => Math.abs(v?.UYU || 0) < 0.005 && Math.abs(v?.USD || 0) < 0.005;
+/** Deudores que se muestran: todos, o solo los que deben algo (y el que se está mirando, aunque esté en 0). */
+const deudoresVisibles = (ldeu, s) => verDeudoresEnCero ? ldeu : ldeu.filter(d => !enCero(s[d.id]) || d.id === filtroGastos);
+
 // ---- Deudores ----
 function normalizarDeudores(lista) {
   const vistos = new Set();
@@ -155,15 +163,20 @@ function renderGastos() {
     tarjeta(GRUPO_DEUDORES, `Deudores por ventas (${ldeu.length})`, "calle") +
     `<div class="saldo total"><span class="saldo-n">Total (caja + banco + deudores)</span><span class="saldo-cols">${dosColumnas(s.total)}</span></div>`;
 
-  // Lista de deudores
-  $("deudores").innerHTML = ldeu.length ? `<div class="deudores">
-    <div class="deudores-titulos" aria-hidden="true"><span>Deudor</span><span>Pesos</span><span>Dólares</span><span></span></div>` + ldeu.map(d => `
+  // Lista de deudores (sin los que están en 0, salvo que se pidan)
+  const vdeu = deudoresVisibles(ldeu, s), ocultos = ldeu.length - vdeu.length;
+  $("d-ver-cero").checked = verDeudoresEnCero;
+  $("d-cero-info").textContent = ocultos ? `(${ocultos} ${ocultos === 1 ? "oculto" : "ocultos"})` : "";
+  $("deudores").innerHTML = !ldeu.length
+    ? `<p class="empty">Todavía no hay deudores. Agregá uno abajo o desde "Nuevo movimiento".</p>`
+    : !vdeu.length ? `<p class="empty">Ningún deudor te debe nada. Marcá "Mostrar los que están en 0" para verlos.</p>`
+    : `<div class="deudores">
+    <div class="deudores-titulos" aria-hidden="true"><span>Deudor</span><span>Pesos</span><span>Dólares</span><span></span></div>` + vdeu.map(d => `
     <div class="deudor${filtroGastos === d.id ? " activo" : ""}">
       <input class="deudor-n" data-renombrar="${esc(d.id)}" value="${esc(d.nombre)}" aria-label="Nombre del deudor ${esc(d.nombre)}">
       <button class="deudor-v" data-cuenta="${esc(d.id)}" title="Ver sus movimientos" aria-label="Ver movimientos de ${esc(d.nombre)}: ${enMoneda(s[d.id].UYU, "UYU")} y ${enMoneda(s[d.id].USD, "USD")}">${dosColumnas(s[d.id])}</button>
       <button class="x" data-borrardeudor="${esc(d.id)}" aria-label="Borrar deudor ${esc(d.nombre)}">×</button>
-    </div>`).join("") + `</div>`
-    : `<p class="empty">Todavía no hay deudores. Agregá uno abajo o desde "Nuevo movimiento".</p>`;
+    </div>`).join("") + `</div>`;
 
   // Filtro de la lista
   const opt = (v, t) => `<option value="${esc(v)}"${filtroGastos === v ? " selected" : ""}>${esc(t)}</option>`;
@@ -317,6 +330,11 @@ $("saldos").addEventListener("click", e => {
   $("saldos").querySelector(`[data-cuenta="${CSS.escape(b.dataset.cuenta)}"]`)?.focus();
 });
 $("g-filtro").onchange = e => { filtroGastos = e.target.value; renderGastos(); };
+$("d-ver-cero").onchange = e => {
+  verDeudoresEnCero = e.target.checked;
+  save(CLAVE_VER_CERO, verDeudoresEnCero);
+  renderGastos();
+};
 
 // Estado de cuenta en PDF de la cuenta elegida (caja, banco, un deudor o todos los deudores)
 $("g-estado").onclick = async () => {
