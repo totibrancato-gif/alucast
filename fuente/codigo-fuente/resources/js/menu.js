@@ -31,7 +31,8 @@ function renderMenuGastos() {
     fila(GRUPO_DEUDORES, "Deudores por ventas", "calle") +
     // Cada deudor, debajo del total de deudores (sin los que están en 0, salvo que se pidan)
     deudoresVisibles(ldeu, s).map(d => fila(d.id, d.nombre, "", "sub")).join("") +
-    `<div class="cuenta total"><span class="cuenta-n">Total</span><span class="cuenta-cols">${dosColumnas(s.total)}</span></div>
+    `<div class="cuenta total"><span class="cuenta-n">Total</span><span class="cuenta-cols">${dosColumnas(s.total)}</span></div>` +
+    fila(DEBO, "Plata que debo", "debo") + `
   </div>
   <button class="btn cargar-mov" data-mgastos="">＋ Cargar movimiento</button>`;
 }

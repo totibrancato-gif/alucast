@@ -285,8 +285,8 @@ function generarEstadoCuenta(cuenta) {
     y += 8;
   }
   lista.forEach(m => {
-    // Entra a la cuenta: +; sale de la cuenta: − (un pase entre dos deudores no cambia el total de deudores)
-    const signo = es(m.hacia) && !es(m.desde) ? "+ " : es(m.desde) && !es(m.hacia) ? "- " : "";
+    // Sube el saldo: +; baja: − (igual que en pantalla; en "Plata que debo", + es deber más)
+    const signo = { "+": "+ ", "−": "- " }[signoEn(m, cuenta, idsDeu)] || "";
     const quien = cuenta === GRUPO_DEUDORES ? nombreCuenta(es(m.hacia) ? m.hacia : m.desde) : "";
     const texto = [m.desc.trim() || "Sin descripción", quien].filter(Boolean).join(" · ");
     fuente("normal", 9.5);

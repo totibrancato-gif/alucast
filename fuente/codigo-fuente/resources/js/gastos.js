@@ -7,11 +7,14 @@
 //   - Sale plata: se resta de una cuenta.
 //   - Pasar de una a otra: se resta de una y se suma a la otra
 //     (ej.: Pérez te paga lo que debía → sale de "Pérez", entra a "Banco").
+// "Plata que debo" es lo que le debés a otros: va aparte del total (ver efecto()).
 // =========================================================================
 
+const DEBO = "debo";                        // "Plata que debo": lo que le debés a otros (es una deuda)
 const FIJAS = [
   { id: "caja", n: "Caja chica" },
   { id: "banco", n: "Banco" },
+  { id: DEBO, n: "Plata que debo" },
 ];
 const GRUPO_DEUDORES = "deudores";          // para ver/filtrar todos los deudores juntos
 const NUEVO = "__nuevo";                    // opción "＋ Nuevo deudor…" en el formulario
@@ -23,6 +26,12 @@ const AYUDA_TIPO = {
   entrada: "La plata se suma a la cuenta que elijas. Ej.: le hiciste un trabajo a Pérez y te queda debiendo → entra a Pérez (deudor).",
   salida: "La plata se resta de la cuenta que elijas. Ej.: compra de perfiles pagada por transferencia → sale de Banco.",
   pase: "Se resta de una cuenta y se suma a la otra. Ej.: Pérez te paga por transferencia lo que debía → sale de Pérez y entra a Banco.",
+};
+/** Se agrega a la ayuda cuando el movimiento usa "Plata que debo". */
+const AYUDA_DEBO = {
+  entrada: "En \"Plata que debo\", entra plata = debés más (ej.: compraste perfiles a pagar).",
+  salida: "En \"Plata que debo\", sale plata = debés menos (ej.: te descontaron parte de la deuda).",
+  pase: "Pasar de Banco (o Caja) a \"Plata que debo\" = pagaste: bajan los dos. De \"Plata que debo\" a Banco = te prestaron: suben los dos.",
 };
 
 let tipoMov = "entrada";
@@ -110,20 +119,41 @@ const movimientos = () => {
 };
 
 /**
- * Saldo de cada cuenta (caja, banco, cada deudor), del total de deudores y del total general,
- * cada uno con pesos y dólares por separado: s[cuenta] = { UYU, USD }.
+ * Cuánto cambia el saldo de una cuenta con un movimiento: +1 (sube), -1 (baja) o 0.
+ * "Plata que debo" es una deuda: entra plata = debés más, sale plata = debés menos, y en un pase
+ * va al revés que las demás: de Banco a "Plata que debo" es un pago (bajan los dos) y de
+ * "Plata que debo" a Banco es un préstamo (suben los dos).
+ */
+function efecto(m, id) {
+  const pase = m.tipo === "pase" && id === DEBO;
+  return (m.hacia === id ? (pase ? -1 : 1) : 0) + (m.desde === id ? (pase ? 1 : -1) : 0);
+}
+
+/**
+ * Saldo de cada cuenta (caja, banco, cada deudor, lo que debés), del total de deudores y del total
+ * general, cada uno con pesos y dólares por separado: s[cuenta] = { UYU, USD }.
+ * El total es caja + banco + deudores (lo que debés va aparte).
  */
 function saldos(lista = movimientos(), listaDeudores = deudores()) {
-  const s = { caja: cero(), banco: cero() };
+  const s = { caja: cero(), banco: cero(), [DEBO]: cero() };
   listaDeudores.forEach(d => { s[d.id] = cero(); });
-  lista.forEach(m => {
-    if (m.hacia in s) s[m.hacia][m.moneda] += m.monto;
-    if (m.desde in s) s[m.desde][m.moneda] -= m.monto;
-  });
+  lista.forEach(m => [...new Set([m.hacia, m.desde])].forEach(id => {
+    if (id in s) s[id][m.moneda] += efecto(m, id) * m.monto;
+  }));
   const sumar = ids => { const t = cero(); ids.forEach(id => MONEDAS.forEach(mo => { t[mo] += s[id][mo]; })); return t; };
   s[GRUPO_DEUDORES] = sumar(listaDeudores.map(d => d.id));
   s.total = sumar(["caja", "banco", GRUPO_DEUDORES]);
   return s;
+}
+
+/** Signo de un movimiento visto desde una cuenta (o desde todos los deudores juntos): "+", "−" o "". */
+function signoEn(m, cuenta, idsDeu) {
+  if (cuenta === GRUPO_DEUDORES) {
+    const a = idsDeu.has(m.hacia), b = idsDeu.has(m.desde);
+    return a && !b ? "+" : b && !a ? "−" : "";
+  }
+  const e = efecto(m, cuenta);
+  return e > 0 ? "+" : e < 0 ? "−" : "";
 }
 
 /** Los dos importes (pesos y dólares) de un saldo, cada uno marcado si es negativo o cero. */
@@ -161,7 +191,8 @@ function renderGastos() {
   $("saldos").innerHTML = `<div class="saldos-titulos" aria-hidden="true"><span></span><span>Pesos</span><span>Dólares</span></div>` +
     tarjeta("caja", "Caja chica", "caja") + tarjeta("banco", "Banco", "banco") +
     tarjeta(GRUPO_DEUDORES, `Deudores por ventas (${ldeu.length})`, "calle") +
-    `<div class="saldo total"><span class="saldo-n">Total (caja + banco + deudores)</span><span class="saldo-cols">${dosColumnas(s.total)}</span></div>`;
+    `<div class="saldo total"><span class="saldo-n">Total (caja + banco + deudores)</span><span class="saldo-cols">${dosColumnas(s.total)}</span></div>` +
+    tarjeta(DEBO, "Plata que debo", "debo");
 
   // Lista de deudores (sin los que están en 0, salvo que se pidan)
   const vdeu = deudoresVisibles(ldeu, s), ocultos = ldeu.length - vdeu.length;
@@ -182,7 +213,8 @@ function renderGastos() {
   const opt = (v, t) => `<option value="${esc(v)}"${filtroGastos === v ? " selected" : ""}>${esc(t)}</option>`;
   $("g-filtro").innerHTML = opt("", "Todas las cuentas") + opt("caja", "Caja chica") + opt("banco", "Banco") +
     opt(GRUPO_DEUDORES, "Todos los deudores") +
-    (ldeu.length ? `<optgroup label="Un deudor">${ldeu.map(d => opt(d.id, d.nombre)).join("")}</optgroup>` : "");
+    (ldeu.length ? `<optgroup label="Un deudor">${ldeu.map(d => opt(d.id, d.nombre)).join("")}</optgroup>` : "") +
+    opt(DEBO, "Plata que debo");
   // El estado de cuenta en PDF es de una cuenta: aparece cuando se elige una
   $("g-estado").hidden = !filtroGastos;
 
@@ -191,10 +223,8 @@ function renderGastos() {
 
   $("g-lista").innerHTML = visibles.length ? visibles.map(m => {
     // Signo según la cuenta que se está mirando (o según el tipo si se ve todo)
-    const es = id => filtroGastos === GRUPO_DEUDORES ? idsDeu.has(id) : id === filtroGastos;
-    const suma = filtroGastos ? es(m.hacia) && !es(m.desde) : m.tipo === "entrada";
-    const resta = filtroGastos ? es(m.desde) && !es(m.hacia) : m.tipo === "salida";
-    const signo = suma ? "+" : resta ? "−" : "";
+    const signo = filtroGastos ? signoEn(m, filtroGastos, idsDeu) : m.tipo === "entrada" ? "+" : m.tipo === "salida" ? "−" : "";
+    const suma = signo === "+", resta = signo === "−";
     const clase = suma ? "mas" : resta ? "menos" : "";
     const cuenta = m.tipo === "pase" ? `${esc(nombreCuenta(m.desde))} → ${esc(nombreCuenta(m.hacia))}` : esc(nombreCuenta(m.hacia || m.desde));
     const fila = `<tr>
@@ -221,8 +251,9 @@ function renderGastos() {
 function opcionesCuentas(sel) {
   const ldeu = deudores();
   const o = (v, t) => `<option value="${esc(v)}"${v === sel ? " selected" : ""}>${esc(t)}</option>`;
-  return `<optgroup label="Caja y banco">${FIJAS.map(f => o(f.id, f.n)).join("")}</optgroup>` +
-    `<optgroup label="Deudores por ventas">${ldeu.map(d => o(d.id, d.nombre)).join("")}${o(NUEVO, "＋ Nuevo deudor…")}</optgroup>`;
+  return `<optgroup label="Caja y banco">${FIJAS.filter(f => f.id !== DEBO).map(f => o(f.id, f.n)).join("")}</optgroup>` +
+    `<optgroup label="Deudores por ventas">${ldeu.map(d => o(d.id, d.nombre)).join("")}${o(NUEVO, "＋ Nuevo deudor…")}</optgroup>` +
+    `<optgroup label="Lo que debés">${o(DEBO, "Plata que debo")}</optgroup>`;
 }
 
 /** Muestra los campos que corresponden al tipo de movimiento elegido. */
@@ -230,7 +261,6 @@ function pintarTipoMov() {
   document.querySelectorAll("#g-tipo-mov [data-tipo]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.tipo === tipoMov)));
   document.querySelectorAll("#g-moneda [data-moneda]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.moneda === monedaMov)));
   $("g-monto-et").textContent = monedaMov === "USD" ? "Monto (U$S)" : "Monto ($)";
-  $("g-ayuda").textContent = AYUDA_TIPO[tipoMov];
   $("g-desde-l").hidden = tipoMov === "entrada";
   $("g-hacia-l").hidden = tipoMov === "salida";
   const valido = v => v === NUEVO || idsCuentas().has(v);
@@ -239,7 +269,14 @@ function pintarTipoMov() {
   $("g-desde").innerHTML = opcionesCuentas(desde);
   $("g-hacia").innerHTML = opcionesCuentas(hacia);
   pintarNuevoDeudor();
+  pintarAyuda();
   if (!$("g-fecha").value) $("g-fecha").value = hoy();
+}
+
+/** Ayuda del tipo de movimiento; si usa "Plata que debo", también qué significa ahí. */
+function pintarAyuda() {
+  const usaDebo = (!$("g-desde-l").hidden && $("g-desde").value === DEBO) || (!$("g-hacia-l").hidden && $("g-hacia").value === DEBO);
+  $("g-ayuda").textContent = AYUDA_TIPO[tipoMov] + (usaDebo ? " " + AYUDA_DEBO[tipoMov] : "");
 }
 
 /** El campo "Nombre del deudor nuevo" aparece solo si se eligió "＋ Nuevo deudor…". */
@@ -278,6 +315,7 @@ $("g-moneda").addEventListener("click", e => {
 });
 ["g-desde", "g-hacia"].forEach(id => $(id).addEventListener("change", () => {
   pintarNuevoDeudor();
+  pintarAyuda();
   if (!$("g-nuevo-l").hidden) $("g-nuevo").focus();
 }));
 
