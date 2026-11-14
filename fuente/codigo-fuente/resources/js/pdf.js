@@ -192,8 +192,12 @@ $("btn-pdf").onclick = async () => {
   let doc;
   try { doc = generarPDF(); }
   catch (e) { console.error(e); toast("No se pudo armar el PDF (" + textoError(e) + ")"); return; }
+  await guardarDocPDF(doc, nombrePDF());
+};
 
-  const nombre = nombrePDF();
+/** Guarda un PDF ya armado: en la app (Mac: Descargas; Windows: "Guardar como…"; tablet: Descargas) o, en la web, se descarga. */
+async function guardarDocPDF(doc, nombre) {
+  if (guardandoPDF) return;
   // App de escritorio: en Mac se guarda en Descargas; en Windows con "Guardar como…"
   if (window.alucast?.guardarPDF) {
     guardandoPDF = true;
@@ -213,4 +217,129 @@ $("btn-pdf").onclick = async () => {
   // Navegador (versión web): se descarga el archivo
   doc.save(nombre);
   toast("PDF descargado: " + nombre);
-};
+}
+
+// =========================================================================
+// PDF "Estado de cuenta" de Control de gastos: los movimientos de una cuenta
+// (caja, banco, un deudor o todos los deudores) y su saldo, en pesos y dólares.
+// =========================================================================
+
+/** Nombre de archivo propuesto: "Estado de cuenta - Juan Pérez 2026-11-14.pdf". */
+const nombreEstadoCuenta = cuenta => `Estado de cuenta - ${nombreCuenta(cuenta).replace(/[\\/:*?"<>|]/g, "")} ${hoy()}.pdf`;
+
+/** Arma el PDF del estado de cuenta y devuelve el documento de jsPDF. */
+function generarEstadoCuenta(cuenta) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: "mm", format: "a4" });
+  const W = 210, H = 297, M = 15, ANCHO = W - 2 * M, FIN = H - 18;
+  const negocio = (EMP.nombre || "").trim();
+  const tel = (EMP.tel || "").trim(), dir = (EMP.dir || "").trim(), extra = (EMP.extra || "").trim();
+  const ldeu = deudores(), idsDeu = new Set(ldeu.map(d => d.id));
+  // Del más viejo al más nuevo, como un extracto
+  const lista = movimientos().filter(m => tocaFiltro(m, cuenta, idsDeu))
+    .sort((a, b) => a.fecha.localeCompare(b.fecha) || a.id.localeCompare(b.id));
+  const saldo = saldos(undefined, ldeu)[cuenta] || { UYU: 0, USD: 0 };
+  const es = id => cuenta === GRUPO_DEUDORES ? idsDeu.has(id) : id === cuenta;
+
+  const color = (rgb, tipo = "text") => tipo === "text" ? doc.setTextColor(...rgb) : tipo === "fill" ? doc.setFillColor(...rgb) : doc.setDrawColor(...rgb);
+  const fuente = (estilo, tam) => { doc.setFont("helvetica", estilo); doc.setFontSize(tam); };
+  const etiqueta = (txt, x, yy, alinear) => { fuente("bold", 7.5); color(PDF_COL.suave); doc.text(txt.toUpperCase(), x, yy, { align: alinear, charSpace: 0.3 }); };
+  let y = M;
+
+  // ---- Encabezado: logo a la izquierda, negocio a la derecha (igual que el presupuesto) ----
+  fuente("bold", 26); color(PDF_COL.texto); doc.text("ALU", M, y + 9);
+  color(PDF_COL.acento); doc.text("CAST", M + doc.getTextWidth("ALU"), y + 9);
+  fuente("normal", 9); color(PDF_COL.suave); doc.text("Aberturas de aluminio", M, y + 15);
+  if (negocio) { fuente("bold", 10.5); color(PDF_COL.texto); doc.text(negocio, W - M, y + 9, { align: "right" }); }
+  if (extra) { fuente("normal", 9); color(PDF_COL.suave); doc.text(extra, W - M, y + 14, { align: "right" }); }
+  y += 19;
+  color(PDF_COL.acento, "draw"); doc.setLineWidth(0.9); doc.line(M, y, W - M, y);
+
+  // ---- Título y fecha ----
+  y += 11;
+  fuente("bold", 17); color(PDF_COL.texto); doc.text("ESTADO DE CUENTA", M, y);
+  fuente("normal", 10); color(PDF_COL.texto); doc.text(`Fecha: ${dmy(hoy())}`, W - M, y, { align: "right" });
+
+  // ---- Cuenta ----
+  y += 6;
+  color(PDF_COL.linea, "draw"); doc.setLineWidth(0.3); doc.roundedRect(M, y, ANCHO, 14, 1.2, 1.2);
+  etiqueta("Cuenta", M + 4, y + 5);
+  fuente("bold", 10.5); color(PDF_COL.texto); doc.text(nombreCuenta(cuenta) || "-", M + 4, y + 10.5);
+  y += 21;
+
+  // ---- Movimientos ----
+  const colFecha = M + 2, colDesc = M + 27, colUsd = W - M - 2, colUyu = colUsd - 34;
+  const anchoDesc = colUyu - 30 - colDesc;
+  const cabecera = () => {
+    color(PDF_COL.fondo, "fill"); doc.rect(M, y - 5, ANCHO, 8, "F");
+    etiqueta("Fecha", colFecha, y); etiqueta("Descripción", colDesc, y);
+    etiqueta("Pesos", colUyu, y, "right"); etiqueta("Dólares", colUsd, y, "right");
+    color(PDF_COL.texto, "draw"); doc.setLineWidth(0.5); doc.line(M, y + 3, W - M, y + 3);
+    y += 9;
+  };
+  const nuevaPagina = () => { doc.addPage(); y = M + 8; cabecera(); };
+  cabecera();
+
+  if (!lista.length) {
+    fuente("normal", 10); color(PDF_COL.suave); doc.text("No hay movimientos en esta cuenta.", colDesc, y);
+    y += 8;
+  }
+  lista.forEach(m => {
+    // Entra a la cuenta: +; sale de la cuenta: − (un pase entre dos deudores no cambia el total de deudores)
+    const signo = es(m.hacia) && !es(m.desde) ? "+ " : es(m.desde) && !es(m.hacia) ? "- " : "";
+    const quien = cuenta === GRUPO_DEUDORES ? nombreCuenta(es(m.hacia) ? m.hacia : m.desde) : "";
+    const texto = [m.desc.trim() || "Sin descripción", quien].filter(Boolean).join(" · ");
+    fuente("normal", 9.5);
+    const lineas = doc.splitTextToSize(texto, anchoDesc);
+    const alto = lineas.length * 4.4 + 3;
+    if (y + alto > FIN) nuevaPagina();
+    color(PDF_COL.texto);
+    doc.text(dmy(m.fecha), colFecha, y);
+    doc.text(lineas, colDesc, y);
+    const importe = signo + (m.moneda === "USD" ? usd(m.monto) : pes(m.monto));
+    doc.text(importe, m.moneda === "USD" ? colUsd : colUyu, y, { align: "right" });
+    y += alto;
+    color(PDF_COL.linea, "draw"); doc.setLineWidth(0.25); doc.line(M, y - 2.5, W - M, y - 2.5);
+    y += 2;
+  });
+
+  // ---- Saldo (en pesos y/o dólares, según lo que tenga la cuenta) ----
+  const usaUyu = saldo.UYU || lista.some(m => m.moneda === "UYU");
+  const usaUsd = saldo.USD || lista.some(m => m.moneda === "USD");
+  const renglones = [usaUyu || !usaUsd ? pes(saldo.UYU) : "", usaUsd ? usd(saldo.USD) : ""].filter(Boolean);
+  const altoSaldo = 6 + renglones.length * 7;
+  if (y + altoSaldo + 4 > FIN) { doc.addPage(); y = M + 8; }
+  y += 2;
+  const anchoTot = 96, xTot = W - M - anchoTot;
+  color(PDF_COL.fondo, "fill"); doc.rect(xTot, y, anchoTot, altoSaldo, "F");
+  color(PDF_COL.acento, "draw"); doc.setLineWidth(0.9); doc.line(xTot, y, W - M, y);
+  etiqueta("Saldo", xTot + 5, y + 8.3);
+  fuente("bold", 15); color(PDF_COL.texto);
+  renglones.forEach((r, i) => doc.text(r, W - M - 5, y + 8.8 + i * 7, { align: "right" }));
+  y += altoSaldo + 10;
+
+  // ---- Contacto ----
+  if (tel || dir) {
+    if (y + 20 > FIN) { doc.addPage(); y = M + 8; }
+    color(PDF_COL.fondo, "fill"); doc.rect(M, y, ANCHO, 18, "F");
+    color(PDF_COL.acento, "fill"); doc.rect(M, y, 1, 18, "F");
+    fuente("bold", 7.5); color(PDF_COL.texto); doc.text("CONTACTO", M + 5, y + 5.5, { charSpace: 0.3 });
+    let x = M + 5;
+    [["Teléfono", tel], ["Dirección", dir]].filter(([, v]) => v).forEach(([et, v]) => {
+      fuente("normal", 7.5); color(PDF_COL.suave); doc.text(et, x, y + 10);
+      fuente("bold", 11); color(PDF_COL.texto); doc.text(v, x, y + 15);
+      x += Math.max(doc.getTextWidth(v), 20) + 12;
+    });
+  }
+
+  // ---- Pie (en cada hoja) ----
+  const paginas = doc.getNumberOfPages();
+  for (let p = 1; p <= paginas; p++) {
+    doc.setPage(p);
+    color(PDF_COL.linea, "draw"); doc.setLineWidth(0.25); doc.line(M, H - 12, W - M, H - 12);
+    fuente("normal", 8); color(PDF_COL.suave);
+    doc.text(`Estado de cuenta al ${dmy(hoy())}${negocio ? " · " + negocio : ""}`, W / 2, H - 7.5, { align: "center" });
+    if (paginas > 1) doc.text(`${p} / ${paginas}`, W - M, H - 7.5, { align: "right" });
+  }
+  return doc;
+}

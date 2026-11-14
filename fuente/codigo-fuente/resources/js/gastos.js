@@ -170,6 +170,8 @@ function renderGastos() {
   $("g-filtro").innerHTML = opt("", "Todas las cuentas") + opt("caja", "Caja chica") + opt("banco", "Banco") +
     opt(GRUPO_DEUDORES, "Todos los deudores") +
     (ldeu.length ? `<optgroup label="Un deudor">${ldeu.map(d => opt(d.id, d.nombre)).join("")}</optgroup>` : "");
+  // El estado de cuenta en PDF es de una cuenta: aparece cuando se elige una
+  $("g-estado").hidden = !filtroGastos;
 
   const visibles = lista.filter(m => tocaFiltro(m, filtroGastos, idsDeu))
     .sort((a, b) => b.fecha.localeCompare(a.fecha) || b.id.localeCompare(a.id));
@@ -315,6 +317,16 @@ $("saldos").addEventListener("click", e => {
   $("saldos").querySelector(`[data-cuenta="${CSS.escape(b.dataset.cuenta)}"]`)?.focus();
 });
 $("g-filtro").onchange = e => { filtroGastos = e.target.value; renderGastos(); };
+
+// Estado de cuenta en PDF de la cuenta elegida (caja, banco, un deudor o todos los deudores)
+$("g-estado").onclick = async () => {
+  if (!filtroGastos) return;
+  if (!window.jspdf) { toast("No se pudo cargar el generador de PDF"); return; }
+  let doc;
+  try { doc = generarEstadoCuenta(filtroGastos); }
+  catch (e) { console.error(e); toast("No se pudo armar el PDF (" + textoError(e) + ")"); return; }
+  await guardarDocPDF(doc, nombreEstadoCuenta(filtroGastos));
+};
 
 // Deudores: alta, renombrar, borrar y ver sus movimientos
 function agregarDeudor() {
