@@ -29,8 +29,8 @@ function renderMenuGastos() {
     `<div class="cuenta titulos" aria-hidden="true"><span class="cuenta-n"></span><span class="cuenta-cols"><span class="mon">Pesos</span><span class="mon">Dólares</span></span></div>` +
     fila("caja", "Caja chica", "caja") + fila("banco", "Banco", "banco") +
     fila(GRUPO_DEUDORES, "Deudores por ventas", "calle") +
-    // Cada deudor, debajo del total de deudores
-    ldeu.map(d => fila(d.id, d.nombre, "", "sub")).join("") +
+    // Cada deudor, debajo del total de deudores (sin los que están en 0, salvo que se pidan)
+    deudoresVisibles(ldeu, s).map(d => fila(d.id, d.nombre, "", "sub")).join("") +
     `<div class="cuenta total"><span class="cuenta-n">Total</span><span class="cuenta-cols">${dosColumnas(s.total)}</span></div>
   </div>
   <button class="btn cargar-mov" data-mgastos="">＋ Cargar movimiento</button>`;
