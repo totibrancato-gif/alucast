@@ -284,6 +284,18 @@
       </div>
     </section>
 
+    <section class="panel" id="g-acreedores">
+      <div class="quote-head abajo">
+        <div><h2>Plata que debo</h2><p class="note intro">Cada uno al que le debés es una cuenta (ej.: un proveedor). El total de arriba es la suma de todas.</p></div>
+      </div>
+      <label class="check"><input type="checkbox" id="a-ver-cero"> Mostrar los que están en 0 <span class="muted" id="a-cero-info"></span></label>
+      <div id="acreedores"></div>
+      <div class="d-alta">
+        <label class="d-alta-n">Agregar cuenta<input id="a-nuevo" autocomplete="off" placeholder="A quién le debés (ej.: Aluminios del Uruguay)"></label>
+        <button class="btn ghost" id="a-agregar">＋ Agregar</button>
+      </div>
+    </section>
+
     <section class="panel" id="g-form">
       <h2>Nuevo movimiento</h2>
       <div class="tabs tipo-mov" role="group" aria-label="Tipo de movimiento" id="g-tipo-mov">
@@ -302,7 +314,7 @@
       <div class="fields">
         <label id="g-desde-l">Sale de<select id="g-desde"></select></label>
         <label id="g-hacia-l">Entra a<select id="g-hacia"></select></label>
-        <label id="g-nuevo-l" hidden>Nombre del deudor nuevo<input id="g-nuevo" autocomplete="off" placeholder="Ej: Juan Pérez"></label>
+        <label id="g-nuevo-l" hidden><span id="g-nuevo-et">Nombre del deudor nuevo</span><input id="g-nuevo" autocomplete="off" placeholder="Ej: Juan Pérez"></label>
         <label><span id="g-monto-et">Monto ($)</span><input id="g-monto" data-pesos type="text" inputmode="decimal" autocomplete="off" placeholder="0"></label>
         <label>Fecha<input id="g-fecha" type="date"></label>
         <label class="ancho-total">Descripción<input id="g-desc" autocomplete="off" placeholder="Ej: Compra de perfiles, seña de Pérez, sueldo…"></label>
